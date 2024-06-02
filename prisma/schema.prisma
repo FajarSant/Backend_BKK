@@ -1,0 +1,68 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Pengguna {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  nama        String
+  email       String       @unique
+  kataSandi   String
+  gambar      String?
+  peran       PeranPengguna @default(PENGGUNA)
+  jurusan     Jurusan
+  lamaran     Lamaran[]
+}
+
+model Perusahaan {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  nama        String
+  deskripsi   String
+  alamat      String?
+  email       String?
+  pekerjaan   Pekerjaan[]
+}
+
+model Pekerjaan {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  judul       String
+  deskripsi   String
+  perusahaanId String      @db.ObjectId
+  gambar      String?
+  perusahaan  Perusahaan   @relation(fields: [perusahaanId], references: [id])
+  lamaran     Lamaran[]
+}
+
+model Lamaran {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  penggunaId  String       @db.ObjectId
+  pekerjaanId String       @db.ObjectId
+  pengguna    Pengguna     @relation(fields: [penggunaId], references: [id])
+  pekerjaan   Pekerjaan    @relation(fields: [pekerjaanId], references: [id])
+  status      StatusLamaran @default(DIPROSES)
+  tanggalDibuat DateTime   @default(now())
+}
+
+enum PeranPengguna {
+  ADMIN
+  PENGGUNA
+  PERUSAHAAN
+}
+
+enum StatusLamaran {
+  DIPROSES
+  DITERIMA
+  DITOLAK
+}
+
+enum Jurusan {
+  PERHOTELAN
+  TBSM
+  TKR
+}

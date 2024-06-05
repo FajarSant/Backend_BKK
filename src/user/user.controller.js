@@ -1,112 +1,100 @@
 const express = require("express");
 const prisma = require("../db");
+
 const {
-  GetALLUsers,
+  GetAllUsers,
   GetUserById,
-  CreateUser,
+  CreateUsers,
+  UpdateUserById,
   DeleteUserById,
-  EditUserById,
 } = require("./user.service");
 
 const router = express.Router();
 
 router.get("/", async (req, res) => {
-  const users = await GetALLUsers();
-
-  res.send(users);
+  const lamaran = await GetAllUsers();
+  res.send(lamaran);
 });
 
 router.get("/:id", async (req, res) => {
-    try {
-      const userId = parseInt(req.params.id);
-      
-      // Panggil fungsi GetUserById dengan ID yang diberikan
-      const user = await GetUserById(userId);
-      
-      // Jika pengguna tidak ditemukan, lempar kesalahan
-      if (!user) {
-        throw new Error("User Not Found");
-      }
-      
-      // Kirim pengguna sebagai respons
-      res.send(user);
-    } catch (error) {
-      console.error("Error getting user:", error);
-      res.status(404).send("User not found");
+  try {
+    const usersid = req.params.id;
+    const users = await GetUserById(usersid);
+
+    if (!users) {
+      throw new Error("User Not Found");
     }
-  });
+
+    res.send(users);
+  } catch (error) {
+    console.error("Error getting post:", error);
+    res.status(404).send("User not found");
+  }
+});
 
 router.post("/", async (req, res) => {
   try {
-    const newUserData = req.body;
-    const user = await CreateUser(newUserData);
+    const NewUserData = req.body;
+    const Users = await CreateUsers(NewUserData);
 
     res.send({
-      data: user,
-      message: "User Berhasil Dibuat",
+      data: Users,
+      message: "users Berhasil Ditambahkan",
     });
   } catch (error) {
     res.status(400).send(error.message);
   }
 });
 
-router.delete("/:id", async (req, res) => {
-    try {
-      const userId = parseInt(req.params.id);
-      
-      await DeleteUserById(userId);
-  
-      res.send("User Telah Dihapus");
-    } catch (error) {
-     res.status(400).send(error.message)
-    }
-  });
-
 router.put("/:id", async (req, res) => {
-  const Usersid = req.params.id;
-  const UsersData = req.body;
+  try {
+    const Usersid = req.params.id;
+    const UpdateUserData = req.body;
+    const UpdateUser = await UpdateUserById(Usersid, UpdateUserData);
 
-  if (
-    !(
-      UsersData.image &
-      UsersData.nama &
-      UsersData.jeniskelamin &
-      UsersData.user &
-      UsersData.email &
-      UsersData.password &
-      UsersData.alamat &
-      UsersData.tempat &
-      UsersData.tanggalLahir 
-    )
-  ) {
-    return res.status(401).send("some fields are missing");
+    res.send({
+      message: "users berhasil diperbarui",
+      UpdateUser: UpdateUser,
+    });
+  } catch (error) {
+    console.error("Error updating Users:", error);
+    res.status(404).send("users not found");
   }
-
-  const user = await EditUserById(parseInt (Usersid), UsersData);
-  res.send({
-    data: user,
-    message: "Users Berhasil Diedit",
-  });
 });
 
 router.patch("/:id", async (req, res) => {
-    try {
-      const userId = parseInt(req.params.id);
-      const userData = req.body;
-  
-      // Panggil fungsi EditUserById untuk mengedit pengguna berdasarkan ID dan data yang diberikan
-      const user = await EditUserById(userId, userData);
-  
-      // Kirim respons dengan data pengguna yang telah diperbarui
-      res.send({
-        data: user,
-        message: "User Berhasil Diedit",
-      });
-    } catch (error) {
-      // Tangani kesalahan dan kirim pesan kesalahan yang sesuai
-      console.error("Error editing user:", error);
-      res.status(400).send(error.message);
+  try {
+    const usersid = req.params.id;
+    const patchData = req.body;
+    const UpdateUser = await UpdateUserById(usersid, patchData);
+
+    res.send({
+      message: "users berhasil diperbarui dengan patch",
+      UpdateUser: UpdateUser,
+    });
+  } catch (error) {
+    console.error("Error patching Users:", error);
+    res.status(404).send("users not found");
+  }
+});
+
+router.delete("/:id", async (req, res) => {
+  try {
+    const usersid = req.params.id;
+    const DeleteUser = await DeleteUserById(usersid);
+
+    if (!DeleteUser) {
+      throw new Error("users Not Found");
     }
-  });
+
+    res.send({
+      message: "users berhasil dihapus",
+      DeleteUser: DeleteUser,
+    });
+  } catch (error) {
+    console.error("Error deleting Users:", error);
+    res.status(404).send("users not found");
+  }
+});
 
 module.exports = router;

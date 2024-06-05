@@ -16,6 +16,12 @@ dotenv.config();
 const usercontroller = require("./user/user.controller");
 app.use('/users', usercontroller);
 
+const applicationcontroller = require("./application/application.controller");
+app.use('/application', applicationcontroller)
+
+const companycontroller = require("./company/company.controller");
+app.use('/company',companycontroller);
+
 const Jobscontroller = require("./Jobs/Jobs.controller");
 app.use('/jobs', Jobscontroller);
 

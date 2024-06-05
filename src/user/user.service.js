@@ -1,90 +1,74 @@
 const prisma = require("../db");
 
-const GetALLUsers = async () => {
-  const users = await prisma.users.findMany();
+const GetAllUsers = async () => {
+  const users = await prisma.pengguna.findMany({
+    select: {
+      id: true,
+      nama: true,
+      peran: true,
+      jurusan: true,
+    },
+  });
 
   return users;
 };
 
 const GetUserById = async (id) => {
-    if (typeof id !== "number") {
-      throw new Error("ID Not a Number");
-    }
-  
-    const user = await prisma.users.findUnique({
+  try {
+    const users = await prisma.pengguna.findUnique({
       where: {
-        id,
+        id: id,
       },
     });
-  
-    return user;
-  };
+    if (!users) {
+      return null;
+    }
 
-const CreateUser = async (newUserData) => {
-  const user = await prisma.users.create({
-    data: {
-      image: newUserData.image,
-      nama: newUserData.nama,
-      jeniskelamin: newUserData.jeniskelamin,
-      user: newUserData.user,
-      email: newUserData.email,
-      password: newUserData.password,
-      alamat: newUserData.alamat,
-      tempat: newUserData.tempat,
-      tanggalLahir: newUserData.tanggalLahir,
-    },
+    return users;
+  } catch (error) {
+    throw new Error(`Failed to get users: ${error.message}`);
+  }
+};
+
+const CreateUsers = async (UserData) => {
+  const users = await prisma.pengguna.create({
+    data:UserData,
   });
-  return user;
+  return users;
+};
+
+const UpdateUserById = async (id, UserData) => {
+  try {
+    const UpdatedUser = await prisma.pengguna.update({
+      where: {
+        id: id, // Gunakan id dari argumen fungsi
+      },
+      data: UserData, // Gunakan data yang diterima dari argumen fungsi
+    });
+
+    return UpdatedUser;
+  } catch (error) {
+    throw new Error(`Failed to update users: ${error.message}`);
+  }
 };
 
 const DeleteUserById = async (id) => {
-    try {
-      const user = await prisma.users.findUnique({
-        where: {
-          id,
-        },
-      });
-  
-      if (!user) {
-        throw new Error("User not found");
-      }
-      const deletedUser = await prisma.users.delete({
-        where: {
-          id,  
-        },
-      });
-  
-      return deletedUser; // Kembalikan pengguna yang dihapus
-    } catch (error) {
-      throw error;
-    }
-  };
-
-const EditUserById = async (id, userData) => {
-    const user = await prisma.users.update({
+  try {
+    const DeleteUser = await prisma.pengguna.delete({
       where: {
-        id: Number(id), // Menggunakan parameter 'id' yang diterima dari fungsi
-      },
-      data: {
-        image: userData.image,
-        nama: userData.nama,
-        jeniskelamin: userData.jeniskelamin,
-        user: userData.user,
-        email: userData.email,
-        password: userData.password,
-        alamat: userData.alamat,
-        tempat: userData.tempat,
-        tanggalLahir: userData.tanggalLahir,
+        id: id,
       },
     });
-    return user;
-  };
-
+    return DeleteUser;
+  } catch (error) {
+    throw new Error(`Failed to delete users: ${error.message}`);
+  }
+};
 
 module.exports = {
-  GetALLUsers,
+  GetAllUsers,
   GetUserById,
-  CreateUser,
+  CreateUsers,
+  UpdateUserById,
   DeleteUserById,
-  EditUserById,
 };

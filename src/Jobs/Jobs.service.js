@@ -5,8 +5,8 @@ const GetAllJobs = async () => {
     select: {
       id: true,
       judul: true,
+      gambar: true,
       perusahaan: true,
-      lamaran: true,
     },
   });
 

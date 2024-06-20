@@ -12,6 +12,8 @@ model Pengguna {
   nama              String
   email             String              @unique
   kataSandi         String
+  alamat            String
+  nomortelepon      String
   gambar            String?
   peran             PeranPengguna       @default(PENGGUNA)
   jurusan           Jurusan
@@ -32,13 +34,14 @@ model LowonganTersimpan {
 model Pekerjaan {
   id                String              @id @default(auto()) @map("_id") @db.ObjectId
   judul             String
+  namaPT            String
   deskripsi         String
-  persyaratan       String?
+  persyaratan       String[]
   openrekrutmen     String[]
   gambar            String?
-  alamat            String?
-  email             String?
-  nomorTelepon      String?
+  alamat            String
+  email             String
+  nomorTelepon      String
   lamaran           Lamaran[]
   lowonganTersimpan LowonganTersimpan[]
 }

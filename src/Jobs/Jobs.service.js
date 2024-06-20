@@ -6,8 +6,10 @@ const GetAllJobs = async () => {
       id: true,
       judul: true,
       gambar: true,
-      deskripsi:true,
-      openrekrutmen:true
+      namaPT:true,
+      alamat:true,
+      nomorTelepon:true,
+      email:true
     },
   });
 

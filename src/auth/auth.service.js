@@ -1,57 +1,72 @@
-// auth.service.js
-const { PrismaClient } = require("@prisma/client");
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { PrismaClient } = require('@prisma/client');
+require('dotenv').config();
+
 const prisma = new PrismaClient();
 
-const jwt = require("jsonwebtoken");
-const secretKey = process.env.JWT_SECRET_KEY;
-
-const authUser = async (email, password) => {
+async function authenticateUser(email, password) {
   try {
     // Cari pengguna berdasarkan email
-    const user = await prisma.users.findUnique({
+    const user = await prisma.pengguna.findUnique({
       where: {
         email: email,
       },
     });
 
-    // Jika pengguna tidak ditemukan
     if (!user) {
-      console.log("User not found with email:", email);
-      return null;
+      throw new Error('Email tidak ditemukan');
     }
 
-    // Jika pengguna ditemukan, periksa apakah password cocok
-    if (user.password === password) {
-      console.log("User found and password matched:", user);
+    // Periksa kecocokan password
+    const passwordMatch = await bcrypt.compare(password, user.kataSandi);
 
-      // Buat token JWT
-      const token = jwt.sign({ userId: user.id }, secretKey, { expiresIn: "1h" });
-
-      return { user, token }; // Kembalikan pengguna dan token JWT
-    } else {
-      console.log("Password incorrect for user:", user);
-      return null; // Kembalikan null jika kredensial tidak valid
+    if (!passwordMatch) {
+      throw new Error('Password salah');
     }
+
+    // Generate JWT token
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+      expiresIn: '1h', // Sesuaikan dengan kebutuhan Anda
+    });
+
+    return { token };
   } catch (error) {
-    console.error("Error validating user credentials:", error.message);
-    throw new Error("Error validating user credentials");
+    throw new Error(error.message);
   }
-};
-const GetUserById = async (id) => {
-    if (typeof id !== "number") {
-      throw new Error("ID Not a Number");
-    }
-  
-    const user = await prisma.users.findUnique({
-      where: {
-        id,
+}
+
+async function registerUser(data) {
+  try {
+    // Hash kata sandi sebelum disimpan ke basis data
+    const hashedPassword = await bcrypt.hash(data.kataSandi, 10); // salt rounds = 10
+
+    // Simpan pengguna baru ke basis data
+    const newUser = await prisma.pengguna.create({
+      data: {
+        email: data.email,
+        kataSandi: hashedPassword,
+        nama: data.nama,
+        alamat: data.alamat,
+        nomortelepon: data.nomortelepon,
+        gambar: data.gambar,
+        peran: data.peran,
+        jurusan: data.jurusan,
       },
     });
-  
-    return user;
-  };
+
+    // Generate JWT token untuk pengguna yang baru terdaftar
+    const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET, {
+      expiresIn: '1h', // Sesuaikan dengan kebutuhan Anda
+    });
+
+    return { token };
+  } catch (error) {
+    throw new Error(error.message);
+  }
+}
 
 module.exports = {
-  authUser,
-  GetUserById,
+  authenticateUser,
+  registerUser,
 };

@@ -1,7 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
-const session = require("express-session");
+const path = require("path");
 
 const PORT = process.env.PORT || 2000;
 
@@ -13,20 +13,24 @@ app.use(express.json());
 
 dotenv.config();
 
+// Middleware untuk parsing JSON dan URL-encoded data
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Middleware untuk menyajikan file statis dari direktori uploads
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+
 const usercontroller = require("./user/user.controller");
 app.use('/users', usercontroller);
+
+const companycontroller = require("./uploads/company.controller")
+app.use('/upload', companycontroller)
 
 const applicationcontroller = require("./application/application.controller");
 app.use('/application', applicationcontroller)
 
-const companycontroller = require("./company/company.controller");
-app.use('/company',companycontroller);
-
 const Jobscontroller = require("./Jobs/Jobs.controller");
 app.use('/jobs', Jobscontroller);
-
-const postcontrollers = require("./post/post.controller");
-app.use('/posts', postcontrollers);
 
 const authController = require("./auth/auth.controller");
 app.use('/auth', authController);

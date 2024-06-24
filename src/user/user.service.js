@@ -1,5 +1,7 @@
 const prisma = require("../db");
+const bcrypt = require('bcryptjs');
 
+// Fungsi untuk mendapatkan semua pengguna
 const GetAllUsers = async () => {
   const users = await prisma.pengguna.findMany({
     select: {
@@ -13,6 +15,7 @@ const GetAllUsers = async () => {
   return users;
 };
 
+// Fungsi untuk mendapatkan pengguna berdasarkan ID
 const GetUserById = async (id) => {
   try {
     const users = await prisma.pengguna.findUnique({
@@ -30,20 +33,26 @@ const GetUserById = async (id) => {
   }
 };
 
+// Fungsi untuk membuat pengguna baru
 const CreateUsers = async (UserData) => {
+  const hashedPassword = await bcrypt.hash(UserData.kataSandi, 10); // Hashing password
   const users = await prisma.pengguna.create({
-    data:UserData,
+    data: {
+      ...UserData,
+      kataSandi: hashedPassword,
+    },
   });
   return users;
 };
 
+// Fungsi untuk memperbarui pengguna berdasarkan ID
 const UpdateUserById = async (id, UserData) => {
   try {
     const UpdatedUser = await prisma.pengguna.update({
       where: {
-        id: id, // Gunakan id dari argumen fungsi
+        id: id,
       },
-      data: UserData, // Gunakan data yang diterima dari argumen fungsi
+      data: UserData,
     });
 
     return UpdatedUser;
@@ -52,6 +61,7 @@ const UpdateUserById = async (id, UserData) => {
   }
 };
 
+// Fungsi untuk menghapus pengguna berdasarkan ID
 const DeleteUserById = async (id) => {
   try {
     const DeleteUser = await prisma.pengguna.delete({

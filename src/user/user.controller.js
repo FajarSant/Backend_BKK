@@ -1,99 +1,99 @@
-const express = require("express");
-const prisma = require("../db");
-
+const express = require('express');
+const upload = require('../middleware/upload.middleware');
 const {
   GetAllUsers,
   GetUserById,
   CreateUsers,
   UpdateUserById,
   DeleteUserById,
-} = require("./user.service");
+} = require('./user.service');
 
 const router = express.Router();
 
+// Route untuk mendapatkan semua pengguna
 router.get("/", async (req, res) => {
-  const lamaran = await GetAllUsers();
-  res.send(lamaran);
+  const users = await GetAllUsers();
+  res.send(users);
 });
 
+// Route untuk mendapatkan pengguna berdasarkan ID
 router.get("/:id", async (req, res) => {
   try {
-    const usersid = req.params.id;
-    const users = await GetUserById(usersid);
+    const userId = req.params.id;
+    const user = await GetUserById(userId);
 
-    if (!users) {
+    if (!user) {
       throw new Error("User Not Found");
     }
 
-    res.send(users);
+    res.send(user);
   } catch (error) {
-    console.error("Error getting post:", error);
+    console.error("Error getting user:", error);
     res.status(404).send("User not found");
   }
 });
 
-router.post("/", async (req, res) => {
+// Route untuk membuat pengguna baru dengan upload gambar
+router.post("/", upload.single('gambar'), async (req, res) => {
   try {
-    const NewUserData = req.body;
-    const Users = await CreateUsers(NewUserData);
+    const file = req.file;
+    if (!file) {
+      return res.status(400).send('Mohon unggah file');
+    }
+
+    const imageUrl = `http://localhost:${process.env.PORT || 3000}/uploads/${file.filename}`;
+    
+    const newUserData = {
+      ...req.body,
+      gambar: imageUrl,
+    };
+
+    const newUser = await CreateUsers(newUserData);
 
     res.send({
-      data: Users,
-      message: "users Berhasil Ditambahkan",
+      data: newUser,
+      message: "User Berhasil Ditambahkan",
     });
   } catch (error) {
+    console.error('Error creating user:', error);
     res.status(400).send(error.message);
   }
 });
 
+// Route untuk memperbarui pengguna berdasarkan ID
 router.put("/:id", async (req, res) => {
   try {
-    const Usersid = req.params.id;
-    const UpdateUserData = req.body;
-    const UpdateUser = await UpdateUserById(Usersid, UpdateUserData);
+    const userId = req.params.id;
+    const updateUserData = req.body;
+    const updatedUser = await UpdateUserById(userId, updateUserData);
 
     res.send({
-      message: "users berhasil diperbarui",
-      UpdateUser: UpdateUser,
+      message: "User berhasil diperbarui",
+      data: updatedUser,
     });
   } catch (error) {
-    console.error("Error updating Users:", error);
-    res.status(404).send("users not found");
+    console.error("Error updating user:", error);
+    res.status(404).send("User not found");
   }
 });
 
-router.patch("/:id", async (req, res) => {
-  try {
-    const usersid = req.params.id;
-    const patchData = req.body;
-    const UpdateUser = await UpdateUserById(usersid, patchData);
-
-    res.send({
-      message: "users berhasil diperbarui dengan patch",
-      UpdateUser: UpdateUser,
-    });
-  } catch (error) {
-    console.error("Error patching Users:", error);
-    res.status(404).send("users not found");
-  }
-});
-
+// Route untuk menghapus pengguna berdasarkan ID
 router.delete("/:id", async (req, res) => {
   try {
-    const usersid = req.params.id;
-    const DeleteUser = await DeleteUserById(usersid);
+    const userId = req.params.id;
+    const deletedUser = await DeleteUserById(userId);
 
-    if (!DeleteUser) {
-      throw new Error("users Not Found");
+    if (!deletedUser) {
+      throw new Error("User Not Found");
     }
 
     res.send({
-      message: "users berhasil dihapus",
-      DeleteUser: DeleteUser,
+      message: "User berhasil dihapus",
+      data: deletedUser,
     });
   } catch (error) {
-    console.error("Error deleting Users:", error);
-    res.status(404).send("users not found");
+    console.error("Error deleting user:", error);
+    res.status(404).send("User not found");
   }
 });
 

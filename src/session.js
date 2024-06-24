@@ -1,32 +1,52 @@
-// session.js
+// server.js
 
 const express = require('express');
-const session = require('express-session');
-const dotenv = require('dotenv');
-const prisma = require("../db");
+const upload = require('./uploads/upload.middleware');
+const prisma = require('./db');
 
-dotenv.config();
+const path = require('path');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-// Konfigurasi session
-const sessionConfig = {
-  secret: process.env.SESSION_SECRET || 'secret', // Secret untuk signing session ID cookie
-  resave: false, // Jangan menyimpan ulang session jika tidak ada perubahan
-  saveUninitialized: true, // Simpan session meskipun belum diinisialisasi
-  cookie: {
-    secure: false, // Set true jika menggunakan HTTPS
-    maxAge: 24 * 60 * 60 * 1000, // Waktu maksimum cookie session dalam milidetik (24 jam contohnya)
-  },
-  store: new PrismaSessionStore({
-    // Menggunakan PrismaClient untuk menyimpan session ke database
-    db: prisma,
-    checkPeriod: 2 * 60 * 1000, // Setiap 2 menit, periksa session yang kadaluwarsa dan hapus dari basis data
-    dbRecordIdIsSessionId: true,
-    dbRecordIdFunction: undefined,
-  }),
-};
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.use(session(sessionConfig));
+// Middleware untuk mengizinkan akses ke direktori uploads
+app.use('./uploads', express.static(path.join(__dirname, 'uploads')));
 
-module.exports = app;
+// Endpoint untuk upload gambar
+app.post('/api/users', upload.single('gambar'), async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).send('Mohon unggah file');
+    }
+
+    // Lakukan sesuai kebutuhan, seperti menyimpan URL gambar di basis data
+    const imageUrl = `http://localhost:${PORT}/uploads/${file.filename}`;
+
+    // Simpan data pengguna ke basis data menggunakan Prisma
+    const newUser = await prisma.pengguna.create({
+      data: {
+        email: req.body.email,
+        kataSandi: req.body.kataSandi,
+        nama: req.body.nama,
+        alamat: req.body.alamat,
+        nomortelepon: req.body.nomortelepon,
+        gambar: imageUrl,
+        peran: req.body.peran,
+        jurusan: req.body.jurusan,
+      },
+    });
+
+    res.status(201).json({ imageUrl: imageUrl, newUser: newUser });
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    res.status(500).send('Gagal mengunggah gambar');
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});

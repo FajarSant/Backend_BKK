@@ -41,7 +41,7 @@ router.post("/", upload.single('gambar'), async (req, res) => {
       return res.status(400).send('Mohon unggah file');
     }
 
-    const imageUrl = `http://localhost:${process.env.PORT || 3000}/uploads/${file.filename}`;
+    const imageUrl = `http://localhost:${process.env.PORT || 2000}/uploads/${file.filename}`;
     
     const newUserData = {
       ...req.body,

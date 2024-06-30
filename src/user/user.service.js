@@ -7,6 +7,7 @@ const GetAllUsers = async () => {
     select: {
       id: true,
       nama: true,
+      email: true,
       peran: true,
       jurusan: true,
     },

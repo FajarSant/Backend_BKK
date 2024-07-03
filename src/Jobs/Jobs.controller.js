@@ -1,5 +1,6 @@
 const express = require("express");
 const prisma = require("../db");
+const upload = require("../middleware/upload.middleware"); // Import middleware upload
 
 const {
   GetAllJobs,
@@ -32,9 +33,20 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", upload.single("gambar"), async (req, res) => {
   try {
     const NewJobsData = req.body;
+    
+    // Validasi input
+    if (!NewJobsData.judul || !NewJobsData.namaPT || !NewJobsData.deskripsi || !NewJobsData.alamat || !NewJobsData.email || !NewJobsData.nomorTelepon) {
+      throw new Error("Harap lengkapi semua bidang yang diperlukan: judul, nama PT, deskripsi, alamat, email, dan nomor telepon");
+    }
+
+    // Jika ada file gambar diunggah, simpan lokasi file atau data gambar di basis data
+    if (req.file) {
+      NewJobsData.gambar = req.file.path; // menyimpan path file gambar
+    }
+
     const jobs = await CreateJobs(NewJobsData);
 
     res.send({

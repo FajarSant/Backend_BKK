@@ -8,6 +8,7 @@ const GetAllUsers = async () => {
       id: true,
       nama: true,
       email: true,
+      alamat:true,
       peran: true,
       jurusan: true,
     },
@@ -34,29 +35,39 @@ const GetUserById = async (id) => {
   }
 };
 
-// Fungsi untuk membuat pengguna baru
 const CreateUsers = async (UserData) => {
-  const hashedPassword = await bcrypt.hash(UserData.kataSandi, 10); // Hashing password
-  const users = await prisma.pengguna.create({
-    data: {
-      ...UserData,
-      kataSandi: hashedPassword,
-    },
-  });
-  return users;
-};
-
-// Fungsi untuk memperbarui pengguna berdasarkan ID
-const UpdateUserById = async (id, UserData) => {
   try {
-    const UpdatedUser = await prisma.pengguna.update({
-      where: {
-        id: id,
+    const hashedPassword = await bcrypt.hash(UserData.kataSandi, 10); // Hashing password
+    const newUser = await prisma.pengguna.create({
+      data: {
+        ...UserData,
+        kataSandi: hashedPassword,
       },
-      data: UserData,
+    });
+    return newUser;
+  } catch (error) {
+    throw new Error(`Failed to create user: ${error.message}`);
+  }
+};
+// Fungsi untuk memperbarui pengguna berdasarkan ID
+const UpdateUserById = async (id, userData) => {
+  try {
+    const updatedUser = await prisma.pengguna.update({
+      where: { id },
+      data: {
+        nama: userData.nama,
+        email: userData.email,
+        peran: userData.peran,
+        alamat: userData.alamat,
+        jurusan: userData.jurusan, // Adjust based on your schema
+        nomortelepon: userData.nomorTelepon, // Corrected field name
+        kataSandi: userData.password,
+        gambar: userData.gambar,
+        // Add other fields as per your schema
+      },
     });
 
-    return UpdatedUser;
+    return updatedUser;
   } catch (error) {
     throw new Error(`Failed to update users: ${error.message}`);
   }

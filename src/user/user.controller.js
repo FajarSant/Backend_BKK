@@ -67,16 +67,17 @@ router.put("/:id", async (req, res) => {
     const updateUserData = req.body;
     const updatedUser = await UpdateUserById(userId, updateUserData);
 
-    res.send({
+    res.status(200).json({
       message: "User berhasil diperbarui",
       data: updatedUser,
     });
   } catch (error) {
     console.error("Error updating user:", error);
-    res.status(404).send("User not found");
+    res.status(500).json({
+      error: "Gagal memperbarui pengguna",
+    });
   }
 });
-
 // Route untuk menghapus pengguna berdasarkan ID
 router.delete("/:id", async (req, res) => {
   try {

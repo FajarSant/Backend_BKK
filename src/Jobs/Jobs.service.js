@@ -7,6 +7,9 @@ const GetAllJobs = async () => {
       judul: true,
       gambar: true,
       namaPT:true,
+      deskripsi:true,
+      persyaratan:true,
+      openrekrutmen:true,
       alamat:true,
       nomorTelepon:true,
       email:true

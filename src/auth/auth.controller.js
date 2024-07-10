@@ -1,4 +1,3 @@
-// auth.controller.js
 const express = require("express");
 const { authenticateUser, registerUser } = require("./auth.service");
 const jwt = require("jsonwebtoken");
@@ -12,6 +11,7 @@ router.post("/register", upload.single("gambar"), async (req, res) => {
   try {
     const { email, kataSandi, nama, alamat, nomortelepon, peran, jurusan } = req.body;
 
+    // Validasi data yang diterima
     if (!email || !kataSandi || !nama || !alamat || !nomortelepon || !peran || !jurusan) {
       throw new Error("Semua field harus diisi");
     }
@@ -21,6 +21,7 @@ router.post("/register", upload.single("gambar"), async (req, res) => {
       gambarPath = req.file.path;
     }
 
+    // Panggil fungsi registerUser untuk membuat pengguna baru
     const { token, user } = await registerUser({
       email,
       kataSandi,
@@ -32,8 +33,10 @@ router.post("/register", upload.single("gambar"), async (req, res) => {
       jurusan,
     });
 
+    // Kirim respons dengan token dan data user
     res.status(201).json({ token, user });
   } catch (error) {
+    // Tangani error dengan memberikan respons status 400 dan pesan error
     res.status(400).json({ error: error.message });
   }
 });
@@ -42,9 +45,19 @@ router.post("/register", upload.single("gambar"), async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { email, kataSandi } = req.body;
+
+    // Pastikan email dan kataSandi tersedia
+    if (!email || !kataSandi) {
+      throw new Error("Email dan kata sandi diperlukan");
+    }
+
+    // Panggil fungsi authenticateUser untuk verifikasi user
     const { token, user } = await authenticateUser(email, kataSandi);
+
+    // Kirim respons dengan token dan data user
     res.json({ token, user });
   } catch (error) {
+    // Tangani error dengan memberikan respons status 400 dan pesan error
     res.status(400).json({ error: error.message });
   }
 });

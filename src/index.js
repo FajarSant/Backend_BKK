@@ -33,6 +33,9 @@ app.use('/upload', companycontroller)
 const applicationcontroller = require("./application/application.controller");
 app.use('/application', applicationcontroller)
 
+const savejobscontroller = require("./savejobs/savejobs.controllers");
+app.use('/savejobs', savejobscontroller)
+
 const Jobscontroller = require("./Jobs/Jobs.controller");
 app.use('/jobs', Jobscontroller);
 

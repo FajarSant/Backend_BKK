@@ -1,97 +1,51 @@
-const express = require("express");
-const {
-  GetAllLamaran,
-  GetLamaranById,
-  CreateLamaran,
-  UpdateLamaranById,
-  DeleteLamaranById,
-} = require("./application.service");
-
+const express = require('express');
 const router = express.Router();
-
-router.get("/", async (req, res) => {
-  const lamaran = await GetAllLamaran();
-  res.send(lamaran);
+const lamaranService = require('./application.service');
+// Get all Lamaran records with related Pengguna and Pekerjaan details
+router.get('/', async (req, res) => {
+  try {
+    const lamaran = await lamaranService.getAllLamaran();
+    res.json(lamaran);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving lamaran', error });
+  }
 });
 
-router.get("/:id", async (req, res) => {
+// Get Lamaran by ID
+router.get('/:id', async (req, res) => {
   try {
-    const lamaranId = req.params.id;
-    const lamaran = await GetLamaranById(lamaranId);
-
+    const lamaran = await lamaranService.getLamaranById(req.params.id);
     if (!lamaran) {
-      throw new Error("Lamaran Not Found");
+      return res.status(404).json({ message: 'Lamaran not found' });
     }
-
-    res.send(lamaran);
+    res.json(lamaran);
   } catch (error) {
-    console.error("Error getting lamaran:", error);
-    res.status(404).send("Lamaran not found");
+    res.status(500).json({ message: 'Error retrieving lamaran', error });
   }
 });
 
-router.post("/", async (req, res) => {
-  try {
-    const newLamaranData = req.body;
-    const lamaran = await CreateLamaran(newLamaranData);
+// Update Lamaran status
+router.put('/:id', async (req, res) => {
+  const { status } = req.body;
+  if (!status) {
+    return res.status(400).json({ message: 'Status is required' });
+  }
 
-    res.send({
-      data: lamaran,
-      message: "Lamaran Berhasil Ditambahkan",
-    });
+  try {
+    const updatedLamaran = await lamaranService.updateLamaran(req.params.id, { status });
+    res.json(updatedLamaran);
   } catch (error) {
-    res.status(400).send(error.message);
+    res.status(500).json({ message: 'Error updating lamaran', error });
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
-    const lamaranId = req.params.id;
-    const updatedLamaranData = req.body;
-    const updatedLamaran = await UpdateLamaranById(lamaranId, updatedLamaranData);
-
-    res.send({
-      message: "Lamaran berhasil diperbarui",
-      updatedLamaran: updatedLamaran,
-    });
+    await lamaranService.deleteLamaran (req.params.id);
+    res.json({ message: 'Lowongan tersimpan deleted successfully' });
   } catch (error) {
-    console.error("Error updating lamaran:", error);
-    res.status(404).send("Lamaran not found");
-  }
-});
-
-router.patch("/:id", async (req, res) => {
-  try {
-    const lamaranId = req.params.id;
-    const patchData = req.body;
-    const updatedLamaran = await UpdateLamaranById(lamaranId, patchData);
-
-    res.send({
-      message: "Lamaran berhasil diperbarui dengan patch",
-      updatedLamaran: updatedLamaran,
-    });
-  } catch (error) {
-    console.error("Error patching lamaran:", error);
-    res.status(404).send("Lamaran not found");
-  }
-});
-
-router.delete("/:id", async (req, res) => {
-  try {
-    const lamaranId = req.params.id;
-    const deletedLamaran = await DeleteLamaranById(lamaranId);
-
-    if (!deletedLamaran) {
-      throw new Error("Lamaran Not Found");
-    }
-
-    res.send({
-      message: "Lamaran berhasil dihapus",
-      deletedLamaran: deletedLamaran,
-    });
-  } catch (error) {
-    console.error("Error deleting lamaran:", error);
-    res.status(404).send("Lamaran not found");
+    console.error("Error deleting lowongan tersimpan:", error);
+    res.status(500).json({ message: 'Error deleting lowongan tersimpan' });
   }
 });
 

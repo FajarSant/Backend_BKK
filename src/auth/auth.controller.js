@@ -9,10 +9,10 @@ const router = express.Router();
 // Endpoint untuk register pengguna dan upload gambar
 router.post("/register", upload.single("gambar"), async (req, res) => {
   try {
-    const { email, kataSandi, nama, alamat, nomortelepon, peran, jurusan } = req.body;
+    const { email, kataSandi, nama, alamat, nomortelepon, peran, jurusan, nis } = req.body;
 
     // Validasi data yang diterima
-    if (!email || !kataSandi || !nama || !alamat || !nomortelepon || !peran || !jurusan) {
+    if (!email || !kataSandi || !nama || !alamat || !nomortelepon || !peran || !jurusan || !nis) {
       throw new Error("Semua field harus diisi");
     }
 
@@ -31,6 +31,7 @@ router.post("/register", upload.single("gambar"), async (req, res) => {
       gambar: gambarPath,
       peran,
       jurusan,
+      nis, // Tambahkan NIS ke data registrasi
     });
 
     // Kirim respons dengan token dan data user
@@ -44,15 +45,15 @@ router.post("/register", upload.single("gambar"), async (req, res) => {
 // Endpoint untuk proses login
 router.post("/login", async (req, res) => {
   try {
-    const { email, kataSandi } = req.body;
+    const { nis, kataSandi } = req.body;
 
-    // Pastikan email dan kataSandi tersedia
-    if (!email || !kataSandi) {
-      throw new Error("Email dan kata sandi diperlukan");
+    // Pastikan NIS dan kataSandi tersedia
+    if (!nis || !kataSandi) {
+      throw new Error("NIS dan kata sandi diperlukan");
     }
 
     // Panggil fungsi authenticateUser untuk verifikasi user
-    const { token, user } = await authenticateUser(email, kataSandi);
+    const { token, user } = await authenticateUser(nis, kataSandi);
 
     // Kirim respons dengan token dan data user
     res.json({ token, user });
@@ -98,8 +99,33 @@ router.get("/me", authenticateJWT, async (req, res) => {
         gambar: true,
         peran: true,
         jurusan: true,
+        lamaran: {
+          select: {
+            id: true,
+            pekerjaan: {
+              select: {
+                id: true,
+                judul: true,
+              },
+            },
+            status: true,
+            tanggalDibuat: true,
+          },
+        },
+        lowonganTersimpan: {
+          select: {
+            id: true,
+            pekerjaan: {
+              select: {
+                id: true,
+                judul: true,
+              },
+            },
+          },
+        },
       },
     });
+
     res.json(user);
   } catch (error) {
     res.status(400).json({ error: error.message });

@@ -4,15 +4,15 @@ const prisma = require("../db");
 
 require("dotenv").config();
 
-// Fungsi untuk autentikasi pengguna berdasarkan email dan password
-async function authenticateUser(email, password) {
+// Fungsi untuk autentikasi pengguna berdasarkan NIS dan password
+async function authenticateUser(nis, password) {
   try {
-    // Cari user berdasarkan email
-    const user = await prisma.pengguna.findUnique({ where: { email } });
+    // Cari user berdasarkan NIS
+    const user = await prisma.pengguna.findUnique({ where: { NIS: nis } });
 
     // Jika user tidak ditemukan, kirimkan pesan error
     if (!user) {
-      throw new Error("Email tidak ditemukan");
+      throw new Error("NIS tidak ditemukan");
     }
 
     // Bandingkan password yang diterima dengan password yang di-hash di database
@@ -53,6 +53,7 @@ async function registerUser(data) {
         gambar: data.gambar,
         peran: data.peran,
         jurusan: data.jurusan,
+        NIS: data.nis, // Tambahkan NIS ke data pengguna baru
       },
     });
 

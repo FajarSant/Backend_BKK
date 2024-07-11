@@ -19,9 +19,7 @@ router.get("/", async (req, res) => {
     res.json(users);
   } catch (error) {
     console.error("Error retrieving users:", error);
-    res
-      .status(500)
-      .json({ message: "Error retrieving users", error: error.message });
+    res.status(500).json({ message: "Error retrieving users", error: error.message });
   }
 });
 
@@ -36,12 +34,11 @@ router.get("/:id", async (req, res) => {
     res.json(user);
   } catch (error) {
     console.error("Error getting user:", error);
-    res
-      .status(500)
-      .json({ message: "Error getting user", error: error.message });
+    res.status(500).json({ message: "Error getting user", error: error.message });
   }
 });
 
+// Route untuk membuat pengguna baru dengan upload gambar
 // Route untuk membuat pengguna baru dengan upload gambar
 router.post("/", upload.single("gambar"), async (req, res) => {
   try {
@@ -50,13 +47,11 @@ router.post("/", upload.single("gambar"), async (req, res) => {
       return res.status(400).send("Mohon unggah file");
     }
 
-    const imageUrl = `http://localhost:${process.env.PORT || 2000}/uploads/${
-      file.filename
-    }`;
+    const imageUrl = `http://localhost:${process.env.PORT || 2000}/uploads/${file.filename}`;
 
     const newUserData = {
       ...req.body,
-      kataSandi: req.body.kataSandi, // Menyimpan kata sandi
+      kataSandi: req.body.kataSandi, // Pastikan kata sandi disimpan dengan aman
       gambar: imageUrl,
     };
 
@@ -68,12 +63,11 @@ router.post("/", upload.single("gambar"), async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating user:", error);
-    res
-      .status(400)
-      .json({ message: "Failed to create user", error: error.message });
+    res.status(400).json({ message: "Failed to create user", error: error.message });
   }
 });
 
+// Route untuk memperbarui pengguna berdasarkan ID
 router.put("/:id", async (req, res) => {
   try {
     const userId = req.params.id;
@@ -81,10 +75,7 @@ router.put("/:id", async (req, res) => {
 
     // Hash password baru jika ada
     if (updateUserData.kataSandi) {
-      updateUserData.kataSandi = await bcrypt.hash(
-        updateUserData.kataSandi,
-        10
-      );
+      updateUserData.kataSandi = await bcrypt.hash(updateUserData.kataSandi, 10);
     }
 
     const updatedUser = await UpdateUserById(userId, updateUserData);
@@ -95,12 +86,9 @@ router.put("/:id", async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating user:", error);
-    res.status(500).json({
-      error: "Gagal memperbarui pengguna",
-    });
+    res.status(500).json({ error: "Failed to update user" });
   }
 });
-
 // Route untuk menghapus pengguna berdasarkan ID
 router.delete("/:id", async (req, res) => {
   const userId = req.params.id;
@@ -115,9 +103,7 @@ router.delete("/:id", async (req, res) => {
     });
   } catch (error) {
     console.error("Error deleting user:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to delete user", error: error.message });
+    res.status(500).json({ message: "Failed to delete user", error: error.message });
   }
 });
 

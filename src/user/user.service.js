@@ -13,6 +13,24 @@ const GetAllUsers = async () => {
       jurusan: true,
       nomortelepon: true,
       gambar: true,
+      lamaran: {
+        select: {
+          pekerjaan: {
+            select: {
+              judul: true,
+            },
+          },
+        },
+      },
+      lowonganTersimpan: {
+        select: {
+          pekerjaan: {
+            select: {
+              judul: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -26,21 +44,55 @@ const GetUserById = async (id) => {
       where: {
         id: id,
       },
+      select: {
+        id: true,
+        nama: true,
+        email: true,
+        alamat: true,
+        peran: true,
+        jurusan: true,
+        nomortelepon: true,
+        gambar: true,
+        lamaran: {
+          select: {
+            pekerjaan: {
+              select: {
+                judul: true,
+              },
+            },
+          },
+        },
+        lowonganTersimpan: {
+          select: {
+            pekerjaan: {
+              select: {
+                judul: true,
+              },
+            },
+          },
+        },
+      },
     });
     return user;
   } catch (error) {
     throw new Error(`Failed to get user: ${error.message}`);
   }
 };
-
-// Fungsi untuk membuat pengguna baru
 const CreateUsers = async (userData) => {
   try {
-    const hashedPassword = await bcrypt.hash(userData.kataSandi, 10); // Hashing password
+    const hashedPassword = await bcrypt.hash(userData.kataSandi, 10);
     const newUser = await prisma.pengguna.create({
       data: {
-        ...userData,
+        nama: userData.nama,
+        email: userData.email,
+        NIS: userData.NIS,
         kataSandi: hashedPassword,
+        tanggallahir: new Date(userData.tanggallahir), // Sesuaikan dengan format yang benar
+        alamat: userData.alamat,
+        nomortelepon: userData.nomortelepon,
+        peran: userData.peran,
+        jurusan: userData.jurusan,
+        gambar: userData.gambar,
       },
     });
     return newUser;
@@ -51,29 +103,9 @@ const CreateUsers = async (userData) => {
 
 const UpdateUserById = async (id, userData) => {
   try {
-    // Verifikasi kata sandi lama
-    if (userData.oldPassword) {
-      // Ambil data pengguna saat ini
-      const currentUser = await prisma.pengguna.findUnique({
-        where: { id },
-      });
-
-      if (!currentUser) {
-        throw new Error('Pengguna tidak ditemukan');
-      }
-
-      // Bandingkan kata sandi lama dengan menggunakan bcrypt.compare
-      const isPasswordValid = await bcrypt.compare(userData.oldPassword, currentUser.kataSandi);
-
-      if (!isPasswordValid) {
-        throw new Error('Kata sandi lama salah');
-      }
-
-      // Hash kata sandi baru
-      userData.kataSandi = await bcrypt.hash(userData.newPassword, 10);
+    if (userData.kataSandi) {
+      userData.kataSandi = await bcrypt.hash(userData.kataSandi, 10);
     }
-
-    // Lakukan update data pengguna
     const updatedUser = await prisma.pengguna.update({
       where: { id },
       data: {
@@ -83,17 +115,16 @@ const UpdateUserById = async (id, userData) => {
         alamat: userData.alamat,
         jurusan: userData.jurusan,
         nomortelepon: userData.nomortelepon,
-        kataSandi: userData.kataSandi, // hanya meng-update jika ada perubahan
+        kataSandi: userData.kataSandi,
         gambar: userData.gambar,
-        // tambahkan field lain sesuai kebutuhan Anda
       },
     });
-
     return updatedUser;
   } catch (error) {
-    throw new Error(`Gagal memperbarui pengguna: ${error.message}`);
+    throw new Error(`Failed to update user: ${error.message}`);
   }
 };
+
 
 // Fungsi untuk menghapus pengguna berdasarkan ID
 const DeleteUserById = async (id) => {

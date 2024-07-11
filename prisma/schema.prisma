@@ -11,7 +11,9 @@ model Pengguna {
   id                String              @id @default(auto()) @map("_id") @db.ObjectId
   nama              String
   email             String              @unique
+  NIS               String              @unique
   kataSandi         String
+  tanggallahir      DateTime?
   alamat            String
   nomortelepon      String
   gambar            String?
@@ -42,6 +44,7 @@ model Pekerjaan {
   alamat            String
   email             String
   nomorTelepon      String
+  Link              String
   lamaran           Lamaran[]
   lowonganTersimpan LowonganTersimpan[]
 }

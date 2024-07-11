@@ -12,7 +12,8 @@ const GetAllJobs = async () => {
       openrekrutmen:true,
       alamat:true,
       nomorTelepon:true,
-      email:true
+      email:true,
+      Link:true
     },
   });
 

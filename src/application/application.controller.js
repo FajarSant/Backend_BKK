@@ -23,6 +23,23 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({ message: 'Error retrieving lamaran', error });
   }
 });
+router.post('/', async (req, res) => {
+  const { pekerjaanId, penggunaId } = req.body;
+  if (!pekerjaanId || !penggunaId) {
+    return res.status(400).json({ message: 'Pekerjaan ID and Pengguna ID are required' });
+  }
+
+  try {
+    const newLamaran = await lamaranService.createLamaran({
+      pekerjaanId,
+      penggunaId,
+    });
+    res.json(newLamaran);
+  } catch (error) {
+    console.error("Error creating lowongan tersimpan:", error);
+    res.status(500).json({ message: 'Error creating lowongan tersimpan' });
+  }
+});
 
 // Update Lamaran status
 router.put('/:id', async (req, res) => {

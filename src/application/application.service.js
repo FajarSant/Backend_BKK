@@ -40,6 +40,15 @@ const getAllLamaran = async () => {
   });
 };
 
+const createLamaran = async (data) => {
+  return await prisma.lamaran.create({
+    data,
+    include: {
+      pekerjaan: true,
+      pengguna: true,
+    },
+  });
+};
 const updateLamaran = async (id, data) => {
   return await prisma.lamaran.update({
     where: { id },
@@ -56,6 +65,7 @@ const deleteLamaran = async (id) => {
 module.exports = {
   getLamaranById,
   getAllLamaran,
+  createLamaran,
   deleteLamaran,
   updateLamaran,
 };

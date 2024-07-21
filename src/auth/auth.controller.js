@@ -1,7 +1,7 @@
 const express = require("express");
 const { authenticateUser, registerUser } = require("./auth.service");
 const jwt = require("jsonwebtoken");
-const upload = require("../middleware/upload.middleware");
+const upload = require("../middleware/uploaduser.middleware");
 const prisma = require("../db");
 
 const router = express.Router();

@@ -1,18 +1,21 @@
 const express = require("express");
-const upload = require("../middleware/upload.middleware");
+const upload = require("../middleware/uploaduser.middleware");
 const {
   GetAllUsers,
   GetUserById,
   CreateUsers,
   UpdateUserById,
   DeleteUserById,
+  importUsersFromExcel,
 } = require("./user.service");
 
 const bcrypt = require("bcryptjs");
 
 const router = express.Router();
 
-// Route untuk mendapatkan semua pengguna
+router.post('/import', upload.single('file'), importUsersFromExcel);
+
+
 router.get("/", async (req, res) => {
   try {
     const users = await GetAllUsers();
@@ -23,7 +26,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Route untuk mendapatkan pengguna berdasarkan ID
 router.get("/:id", async (req, res) => {
   const userId = req.params.id;
   try {
@@ -38,8 +40,6 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Route untuk membuat pengguna baru dengan upload gambar
-// Route untuk membuat pengguna baru dengan upload gambar
 router.post("/", upload.single("gambar"), async (req, res) => {
   try {
     const file = req.file;
@@ -67,18 +67,16 @@ router.post("/", upload.single("gambar"), async (req, res) => {
   }
 });
 
-// Route untuk memperbarui pengguna berdasarkan ID
-router.put("/:id", async (req, res) => {
+router.put("/:id", upload.single('gambar'), async (req, res) => {
   try {
     const userId = req.params.id;
     const updateUserData = req.body;
 
-    // Hash password baru jika ada
-    if (updateUserData.kataSandi) {
-      updateUserData.kataSandi = await bcrypt.hash(updateUserData.kataSandi, 10);
-    }
+    // Jika ada file yang diunggah, gunakan file tersebut
+    const file = req.file;
 
-    const updatedUser = await UpdateUserById(userId, updateUserData);
+    // Panggil fungsi untuk memperbarui pengguna
+    const updatedUser = await UpdateUserById(userId, updateUserData, file);
 
     res.status(200).json({
       message: "User berhasil diperbarui",
@@ -89,7 +87,7 @@ router.put("/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to update user" });
   }
 });
-// Route untuk menghapus pengguna berdasarkan ID
+
 router.delete("/:id", async (req, res) => {
   const userId = req.params.id;
   try {

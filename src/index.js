@@ -27,9 +27,6 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 const usercontroller = require("./user/user.controller");
 app.use('/users', usercontroller);
 
-const companycontroller = require("./uploads/company.controller")
-app.use('/upload', companycontroller)
-
 const applicationcontroller = require("./application/application.controller");
 app.use('/application', applicationcontroller)
 

@@ -1,6 +1,6 @@
 const express = require("express");
 const prisma = require("../db");
-const upload = require("../middleware/upload.middleware"); // Import middleware upload
+const upload = require("../middleware/uploaduser.middleware"); // Import middleware upload
 
 const {
   GetAllJobs,

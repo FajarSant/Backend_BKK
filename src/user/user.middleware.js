@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Pastikan folder `uploads/excel` ada
-const uploadDir = path.join(__dirname, '../uploads/excel');
+const uploadDir = path.join(__dirname, '../../uploads/excel');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }

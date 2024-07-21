@@ -1,21 +1,40 @@
 const express = require("express");
-const upload = require("../middleware/uploaduser.middleware");
+const prisma = require("../db");
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
+const { uploadExcel, uploadImage } = require("./user.middleware")
 const {
   GetAllUsers,
   GetUserById,
   CreateUsers,
   UpdateUserById,
   DeleteUserById,
-  importUsersFromExcel,
+  importUsersFromExcel
 } = require("./user.service");
-
-const bcrypt = require("bcryptjs");
 
 const router = express.Router();
 
-router.post('/import', upload.single('file'), importUsersFromExcel);
+router.post('/import', uploadExcel.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).send("Please upload an Excel file.");
+    }
 
+    const filePath = path.join(__dirname, '../uploads/excel', req.file.filename);
+    const result = await importUsersFromExcel(filePath);
 
+    // Hapus file setelah diimpor
+    fs.unlinkSync(filePath);
+
+    res.json(result);
+  } catch (error) {
+    console.error("Error importing users from Excel:", error);
+    res.status(500).json({ message: "Failed to import data from Excel.", error: error.message });
+  }
+});
+
+// Get all users
 router.get("/", async (req, res) => {
   try {
     const users = await GetAllUsers();
@@ -26,6 +45,7 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Get user by ID
 router.get("/:id", async (req, res) => {
   const userId = req.params.id;
   try {
@@ -40,26 +60,25 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/", upload.single("gambar"), async (req, res) => {
+// Create a new user
+router.post("/", uploadImage.single("gambar"), async (req, res) => {
   try {
     const file = req.file;
-    if (!file) {
-      return res.status(400).send("Mohon unggah file");
-    }
 
-    const imageUrl = `http://localhost:${process.env.PORT || 2000}/uploads/${file.filename}`;
+    // Handle image upload
+    const imageUrl = file ? `http://localhost:${process.env.PORT || 2000}/uploads/users/${file.filename}` : null;
 
     const newUserData = {
       ...req.body,
-      kataSandi: req.body.kataSandi, // Pastikan kata sandi disimpan dengan aman
+      kataSandi: req.body.kataSandi, // Ensure password is handled securely
       gambar: imageUrl,
     };
 
     const newUser = await CreateUsers(newUserData);
 
-    res.json({
+    res.status(201).json({
       data: newUser,
-      message: "User berhasil ditambahkan",
+      message: "User successfully created",
     });
   } catch (error) {
     console.error("Error creating user:", error);
@@ -67,27 +86,47 @@ router.post("/", upload.single("gambar"), async (req, res) => {
   }
 });
 
-router.put("/:id", upload.single('gambar'), async (req, res) => {
+// Update user by ID
+router.put('/:id', uploadImage.single('gambar'), async (req, res) => {
+  const userId = req.params.id;
+
   try {
-    const userId = req.params.id;
-    const updateUserData = req.body;
+    const existingUser = await prisma.pengguna.findUnique({
+      where: { id: userId },
+    });
 
-    // Jika ada file yang diunggah, gunakan file tersebut
+    if (!existingUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     const file = req.file;
+    let imageUrl;
 
-    // Panggil fungsi untuk memperbarui pengguna
-    const updatedUser = await UpdateUserById(userId, updateUserData, file);
+    if (file) {
+      imageUrl = `http://localhost:${process.env.PORT || 2000}/uploads/users/${file.filename}`;
+      
+      
+    }
+    
 
-    res.status(200).json({
-      message: "User berhasil diperbarui",
+    const updatedUserData = {
+      ...req.body,
+      gambar: imageUrl || existingUser.gambar, // Pertahankan gambar lama jika tidak ada gambar baru
+    };
+
+    const updatedUser = await UpdateUserById(userId, updatedUserData);
+
+    res.json({
       data: updatedUser,
+      message: 'User successfully updated',
     });
   } catch (error) {
-    console.error("Error updating user:", error);
-    res.status(500).json({ error: "Failed to update user" });
+    console.error('Error updating user:', error);
+    res.status(400).json({ message: 'Failed to update user', error: error.message });
   }
 });
 
+// Delete user by ID
 router.delete("/:id", async (req, res) => {
   const userId = req.params.id;
   try {
@@ -96,7 +135,7 @@ router.delete("/:id", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
     res.json({
-      message: "User berhasil dihapus",
+      message: "User successfully deleted",
       data: deletedUser,
     });
   } catch (error) {

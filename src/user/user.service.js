@@ -1,85 +1,54 @@
 const prisma = require("../db");
 const bcrypt = require('bcryptjs');
-const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const XLSX = require('xlsx');
 
-// Set up storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../uploads/users'));
-  },
-  filename: (req, file, cb) => {
-    // Gunakan nama NIS sebagai nama file atau fallback ke timestamp
-    const nis = req.body.NIS ? req.body.NIS : Date.now();
-    const extension = path.extname(file.originalname).toLowerCase();
-    cb(null, `${nis}${extension}`);
-  }
-});
-
-// File filter to accept only specific file types (optional, for example, Excel files)
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['.xlsx', '.xls'];
-  const fileExtension = path.extname(file.originalname).toLowerCase();
-
-  if (allowedTypes.includes(fileExtension)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Only Excel files are allowed!'), false);
-  }
-};
-
-// Create multer instance with storage and fileFilter
-const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter, // Optional: Use fileFilter if you need to restrict file types
-  limits: {
-    fileSize: 5 * 1024 * 1024 // Limit file size to 5MB (optional)
-  }
-});
+// Retrieve all users
 const GetAllUsers = async () => {
-  const users = await prisma.pengguna.findMany({
-    select: {
-      id: true,
-      nama: true,
-      email: true,
-      NIS: true,
-      alamat: true,
-      peran: true,
-      jurusan: true,
-      nomortelepon: true,
-      gambar: true,
-      lamaran: {
-        select: {
-          pekerjaan: {
-            select: {
-              judul: true,
+  try {
+    const users = await prisma.pengguna.findMany({
+      select: {
+        id: true,
+        nama: true,
+        email: true,
+        NIS: true,
+        alamat: true,
+        peran: true,
+        jurusan: true,
+        nomortelepon: true,
+        gambar: true,
+        lamaran: {
+          select: {
+            pekerjaan: {
+              select: {
+                judul: true,
+              },
+            },
+          },
+        },
+        lowonganTersimpan: {
+          select: {
+            pekerjaan: {
+              select: {
+                judul: true,
+              },
             },
           },
         },
       },
-      lowonganTersimpan: {
-        select: {
-          pekerjaan: {
-            select: {
-              judul: true,
-            },
-          },
-        },
-      },
-    },
-  });
-
-  return users;
+    });
+    return users;
+  } catch (error) {
+    throw new Error(`Failed to get users: ${error.message}`);
+  }
 };
 
+// Retrieve user by ID
 const GetUserById = async (id) => {
   try {
     const user = await prisma.pengguna.findUnique({
-      where: {
-        id: id,
-      },
+      where: { id },
       select: {
         id: true,
         nama: true,
@@ -115,6 +84,8 @@ const GetUserById = async (id) => {
     throw new Error(`Failed to get user: ${error.message}`);
   }
 };
+
+// Create new user
 const CreateUsers = async (userData) => {
   try {
     const hashedPassword = await bcrypt.hash(userData.kataSandi, 10);
@@ -140,44 +111,22 @@ const CreateUsers = async (userData) => {
   }
 };
 
-const UpdateUserById = async (id, userData, file) => {
+// Update user by ID
+const UpdateUserById = async (id, userData) => {
   try {
-    let gambar = userData.gambar;
-
-    if (file) {
-      gambar = `uploads/users/${file.filename}`;
-
-      // Hapus gambar lama jika ada
-      const existingUser = await prisma.pengguna.findUnique({ where: { id } });
-      if (existingUser && existingUser.gambar) {
-        const oldImagePath = path.resolve(__dirname, '../uploads/users', path.basename(existingUser.gambar));
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
-          console.log('Old image successfully deleted.');
-        } else {
-          console.log('Old image file not found at:', oldImagePath);
-        }
-      }
-    }
+    const updates = { ...userData };
 
     if (userData.kataSandi) {
-      userData.kataSandi = await bcrypt.hash(userData.kataSandi, 10);
+      updates.kataSandi = await bcrypt.hash(userData.kataSandi, 10);
+    }
+
+    if (userData.tanggallahir) {
+      updates.tanggallahir = new Date(userData.tanggallahir);
     }
 
     const updatedUser = await prisma.pengguna.update({
       where: { id },
-      data: {
-        nama: userData.nama,
-        email: userData.email,
-        peran: userData.peran,
-        NIS: userData.NIS,
-        alamat: userData.alamat,
-        jurusan: userData.jurusan,
-        tanggallahir: userData.tanggallahir ? new Date(userData.tanggallahir) : null,
-        nomortelepon: userData.nomortelepon,
-        kataSandi: userData.kataSandi,
-        gambar: gambar || undefined,
-      },
+      data: updates,
     });
 
     return updatedUser;
@@ -186,6 +135,7 @@ const UpdateUserById = async (id, userData, file) => {
   }
 };
 
+// Delete user by ID
 const DeleteUserById = async (id) => {
   try {
     const user = await prisma.pengguna.findUnique({ where: { id } });
@@ -194,20 +144,17 @@ const DeleteUserById = async (id) => {
       throw new Error('User not found');
     }
 
-    // Hapus gambar pengguna jika ada
+    // Delete user's image if it exists
     if (user.gambar) {
-      const imagePath = path.resolve(__dirname, '../uploads/users', path.basename(user.gambar));
-
-      console.log('Attempting to delete image at path:', imagePath);
+      const imagePath = path.resolve(__dirname, '../../uploads/users', path.basename(user.gambar));
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);
-        console.log('Image successfully deleted.');
       } else {
-        console.log('Image file not found at:', imagePath);
+        console.warn('Image not found, skipping deletion:', imagePath);
       }
     }
 
-    // Hapus pengguna dari database
+    // Delete user from the database
     const deletedUser = await prisma.pengguna.delete({
       where: { id },
     });
@@ -218,55 +165,38 @@ const DeleteUserById = async (id) => {
   }
 };
 
-const importUsersFromExcel = async (req, res) => {
+// Import users from Excel
+const importUsersFromExcel = async (filePath) => {
   try {
-    if (!req.file) {
-      return res.status(400).send('No file uploaded.');
-    }
-
-    const filePath = path.join(__dirname, '../uploads/users', req.file.filename);
-
     const workbook = XLSX.readFile(filePath);
-    const sheetName = workbook.SheetNames[0]; 
+    const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const data = XLSX.utils.sheet_to_json(sheet);
+
     for (const row of data) {
-      const {
-        nama,
-        email,
-        NIS,
-        alamat,
-        peran,
-        jurusan,
-        nomortelepon,
-        gambar,
-        kataSandi,
-        tanggallahir
-      } = row;
-      const hashedPassword = kataSandi ? await bcrypt.hash(kataSandi, 10) : null;
+      console.log(row);
+
+      const hashedPassword = await bcrypt.hash(row.kataSandi.toString(), 10);
 
       await prisma.pengguna.create({
         data: {
-          nama,
-          email,
-          NIS,
-          alamat,
-          peran,
-          jurusan,
-          nomortelepon,
-          gambar,
+          nama: row.nama,
+          email: row.email,
+          NIS: row.NIS.toString(),
           kataSandi: hashedPassword,
-          tanggallahir: tanggallahir ? new Date(tanggallahir) : null,
+          alamat: row.alamat,
+          nomortelepon: row.nomorTelepon.toString(),
+          peran: row.peran,
+          jurusan: row.jurusan,
+          gambar: row.gambar || null,
         },
       });
     }
 
-    // Delete the uploaded file
-    fs.unlinkSync(filePath);
-
-    res.status(200).send('Users imported successfully.');
+    return { message: "Data berhasil diimpor." };
   } catch (error) {
-    res.status(500).send(`Failed to import users: ${error.message}`);
+    console.error("Error importing users from Excel:", error);
+    throw new Error(`Error importing users from Excel: ${error.message}`);
   }
 };
 

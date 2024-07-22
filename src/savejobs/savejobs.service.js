@@ -17,7 +17,7 @@ const getAllLowonganTersimpan = async () => {
     include: {
       pekerjaan: {
         select: {
-          judul: true, // Select fields from pekerjaan as needed
+          namaPT: true, // Select fields from pekerjaan as needed
           // Other fields from pekerjaan if needed
         },
       },

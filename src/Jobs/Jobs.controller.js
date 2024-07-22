@@ -9,6 +9,8 @@ const {
   CreateJobs,
   UpdateJobsById,
   DeleteJobsById,
+  DeleteApplicationsByJobId,
+  DeleteSavedApplicationsByJobId,
 } = require("./Jobs.service");
 
 const router = express.Router();
@@ -126,6 +128,10 @@ router.delete("/:id", async (req, res) => {
       }
     }
 
+    // Hapus lamaran dan lamaran tersimpan yang terkait dengan pekerjaan
+    await DeleteApplicationsByJobId(jobId);
+    await DeleteSavedApplicationsByJobId(jobId);
+
     // Hapus pekerjaan dari database
     await DeleteJobsById(jobId);
 
@@ -135,5 +141,6 @@ router.delete("/:id", async (req, res) => {
     res.status(400).json({ message: "Failed to delete job", error: error.message });
   }
 });
+
 
 module.exports = router;

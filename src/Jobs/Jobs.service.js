@@ -64,6 +64,30 @@ const UpdateJobsById = async (jobId, jobData) => {
   }
 };
 
+const DeleteApplicationsByJobId = async (jobId) => {
+  try {
+    return await prisma.lamaran.deleteMany({
+      where: {
+        pekerjaanId: jobId,
+      },
+    });
+  } catch (error) {
+    throw new Error(`Failed to delete applications: ${error.message}`);
+  }
+};
+
+const DeleteSavedApplicationsByJobId = async (jobId) => {
+  try {
+    return await prisma.lowonganTersimpan.deleteMany({
+      where: {
+        pekerjaanId: jobId,
+      },
+    });
+  } catch (error) {
+    throw new Error(`Failed to delete saved applications: ${error.message}`);
+  }
+};
+
 const DeleteJobsById = async (jobId) => {
   try {
     return await prisma.pekerjaan.delete({
@@ -82,4 +106,6 @@ module.exports = {
   CreateJobs,
   UpdateJobsById,
   DeleteJobsById,
+  DeleteApplicationsByJobId,
+  DeleteSavedApplicationsByJobId,
 };

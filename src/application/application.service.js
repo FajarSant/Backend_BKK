@@ -11,7 +11,7 @@ const getLamaranById = async (id) => {
       },
       pekerjaan: {
         select: {
-          judul: true,
+          namaPT: true,
         },
       },
     },
@@ -33,7 +33,7 @@ const getAllLamaran = async () => {
       },
       pekerjaan: {
         select: {
-          judul: true,
+          namaPT: true,
         },
       },
     },

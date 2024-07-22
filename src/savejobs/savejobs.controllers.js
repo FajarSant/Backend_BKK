@@ -27,22 +27,34 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create a new LowonganTersimpan
 router.post('/', async (req, res) => {
   const { pekerjaanId, penggunaId } = req.body;
+
   if (!pekerjaanId || !penggunaId) {
     return res.status(400).json({ message: 'Pekerjaan ID and Pengguna ID are required' });
   }
 
   try {
+    // Check if the job has already been saved by this user
+    const existingLowonganTersimpan = await lowonganTersimpanService.findLowonganTersimpan({
+      pekerjaanId,
+      penggunaId,
+    });
+
+    if (existingLowonganTersimpan) {
+      return res.status(400).json({ message: 'Job sudah disimpan sebelumnya.' });
+    }
+
+    // If not, create a new saved job record
     const newLowonganTersimpan = await lowonganTersimpanService.createLowonganTersimpan({
       pekerjaanId,
       penggunaId,
     });
+
     res.json(newLowonganTersimpan);
   } catch (error) {
     console.error("Error creating lowongan tersimpan:", error);
-    res.status(500).json({ message: 'Error creating lowongan tersimpan' });
+    res.status(500).json({ message: 'Terjadi kesalahan dan coba lagi nanti.' });
   }
 });
 

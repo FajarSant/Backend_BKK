@@ -30,7 +30,17 @@ const getAllLowonganTersimpan = async () => {
   });
 };
 
-// Create a new LowonganTersimpan
+const findLowonganTersimpan = async ({ pekerjaanId, penggunaId }) => {
+  return await prisma.lowonganTersimpan.findFirst({
+    where: {
+      AND: [
+        { pekerjaanId: pekerjaanId },
+        { penggunaId: penggunaId }
+      ]
+    },
+  });
+};
+
 const createLowonganTersimpan = async (data) => {
   return await prisma.lowonganTersimpan.create({
     data,
@@ -40,6 +50,8 @@ const createLowonganTersimpan = async (data) => {
     },
   });
 };
+
+
 
 // Update LowonganTersimpan by ID
 const updateLowonganTersimpan = async (id, data) => {
@@ -66,4 +78,5 @@ module.exports = {
   createLowonganTersimpan,
   updateLowonganTersimpan,
   deleteLowonganTersimpan,
+  findLowonganTersimpan,
 };

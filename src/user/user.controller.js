@@ -34,7 +34,6 @@ router.post('/import', uploadExcel.single('file'), async (req, res) => {
   }
 });
 
-// Get all users
 router.get("/", async (req, res) => {
   try {
     const users = await GetAllUsers();
@@ -45,7 +44,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Get user by ID
 router.get("/:id", async (req, res) => {
   const userId = req.params.id;
   try {
@@ -60,7 +58,6 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Create a new user
 router.post("/", uploadImage.single("gambar"), async (req, res) => {
   try {
     const file = req.file;
@@ -70,7 +67,7 @@ router.post("/", uploadImage.single("gambar"), async (req, res) => {
 
     const newUserData = {
       ...req.body,
-      kataSandi: req.body.kataSandi, // Ensure password is handled securely
+      katasandi: req.body.katasandi, // Ensure password is handled securely
       gambar: imageUrl,
     };
 
@@ -86,7 +83,6 @@ router.post("/", uploadImage.single("gambar"), async (req, res) => {
   }
 });
 
-// Update user by ID
 router.put('/:id', uploadImage.single('gambar'), async (req, res) => {
   const userId = req.params.id;
 
@@ -126,7 +122,6 @@ router.put('/:id', uploadImage.single('gambar'), async (req, res) => {
   }
 });
 
-// Delete user by ID
 router.delete("/:id", async (req, res) => {
   const userId = req.params.id;
   try {

@@ -22,7 +22,7 @@ const GetAllUsers = async () => {
           select: {
             pekerjaan: {
               select: {
-                judul: true,
+                namaPT: true,
               },
             },
           },
@@ -63,7 +63,7 @@ const GetUserById = async (id) => {
           select: {
             pekerjaan: {
               select: {
-                judul: true,
+                namaPT: true
               },
             },
           },
@@ -72,7 +72,7 @@ const GetUserById = async (id) => {
           select: {
             pekerjaan: {
               select: {
-                judul: true,
+                namaPT:true
               },
             },
           },
@@ -88,14 +88,14 @@ const GetUserById = async (id) => {
 // Create new user
 const CreateUsers = async (userData) => {
   try {
-    const hashedPassword = await bcrypt.hash(userData.kataSandi, 10);
+    const hashedPassword = await bcrypt.hash(userData.katasandi, 10);
 
     const newUser = await prisma.pengguna.create({
       data: {
         nama: userData.nama,
         email: userData.email,
         NIS: userData.NIS,
-        kataSandi: hashedPassword,
+        katasandi: hashedPassword,
         tanggallahir: userData.tanggallahir ? new Date(userData.tanggallahir) : null,
         alamat: userData.alamat,
         nomortelepon: userData.nomortelepon,
@@ -116,8 +116,8 @@ const UpdateUserById = async (id, userData) => {
   try {
     const updates = { ...userData };
 
-    if (userData.kataSandi) {
-      updates.kataSandi = await bcrypt.hash(userData.kataSandi, 10);
+    if (userData.katasandi) {
+      updates.katasandi = await bcrypt.hash(userData.katasandi, 10);
     }
 
     if (userData.tanggallahir) {
@@ -176,14 +176,14 @@ const importUsersFromExcel = async (filePath) => {
     for (const row of data) {
       console.log(row);
 
-      const hashedPassword = await bcrypt.hash(row.kataSandi.toString(), 10);
+      const hashedPassword = await bcrypt.hash(row.katasandi.toString(), 10);
 
       await prisma.pengguna.create({
         data: {
           nama: row.nama,
           email: row.email,
           NIS: row.NIS.toString(),
-          kataSandi: hashedPassword,
+          katasandi: hashedPassword,
           alamat: row.alamat,
           nomortelepon: row.nomorTelepon.toString(),
           peran: row.peran,

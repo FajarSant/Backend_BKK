@@ -12,7 +12,7 @@ model Pengguna {
   nama              String
   email             String              @unique
   NIS               String              @unique
-  kataSandi         String
+  katasandi         String
   tanggallahir      DateTime?
   alamat            String
   nomortelepon      String
@@ -20,7 +20,7 @@ model Pengguna {
   peran             PeranPengguna       @default(PENGGUNA)
   jurusan           Jurusan
   lamaran           Lamaran[]
-  lowonganTersimpan LowonganTersimpan[] // Menambahkan field relasi
+  lowonganTersimpan LowonganTersimpan[]
 }
 
 model LowonganTersimpan {
@@ -35,9 +35,9 @@ model LowonganTersimpan {
 
 model Pekerjaan {
   id                String              @id @default(auto()) @map("_id") @db.ObjectId
-  judul             String
   namaPT            String
   deskripsi         String
+  berkas            String
   persyaratan       String[]
   openrekrutmen     String[]
   gambar            String?

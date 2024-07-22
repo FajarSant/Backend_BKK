@@ -4,7 +4,6 @@ const GetAllJobs = async () => {
   const jobs = await prisma.pekerjaan.findMany({
     select: {
       id: true,
-      judul: true,
       gambar: true,
       namaPT:true,
       deskripsi:true,
@@ -13,62 +12,66 @@ const GetAllJobs = async () => {
       alamat:true,
       nomorTelepon:true,
       email:true,
-      Link:true
+      Link:true,
+      berkas:true
     },
   });
 
   return jobs;
 };
 
-const GetJobsById = async (id) => {
+const GetJobsById = async (jobId) => {
   try {
-    const jobs = await prisma.pekerjaan.findUnique({
-      where: {
-        id: id,
-      },
+    return await prisma.pekerjaan.findUnique({
+      where: { id: jobId },
     });
-    if (!jobs) {
-      return null;
-    }
-
-    return jobs;
   } catch (error) {
-    throw new Error(`Failed to get jobs: ${error.message}`);
+    throw new Error(`Failed to get job by id: ${error.message}`);
   }
 };
 
-const CreateJobs = async (jobsData) => {
-  const jobs = await prisma.pekerjaan.create({
-    data: jobsData,
-  });
-  return jobs;
-};
-
-const UpdateJobsById = async (id, jobsData) => {
+const CreateJobs = async (jobData) => {
   try {
-    const updatedJobs = await prisma.pekerjaan.update({
-      where: {
-        id: id, // Gunakan id dari argumen fungsi
+    const newJob = await prisma.pekerjaan.create({
+      data: {
+        namaPT: jobData.namaPT,
+        deskripsi: jobData.deskripsi,
+        berkas: jobData.berkas,
+        persyaratan: jobData.persyaratan,
+        openrekrutmen: jobData.openrekrutmen,
+        gambar: jobData.gambar,
+        alamat: jobData.alamat,
+        email: jobData.email,
+        nomorTelepon: jobData.nomorTelepon,
+        Link: jobData.Link,
       },
-      data: jobsData, // Gunakan data yang diterima dari argumen fungsi
     });
 
-    return updatedJobs;
+    return newJob;
   } catch (error) {
-    throw new Error(`Failed to update jobs: ${error.message}`);
+    throw new Error(`Failed to create job: ${error.message}`);
   }
 };
 
-const DeleteJobsById = async (id) => {
+const UpdateJobsById = async (jobId, jobData) => {
   try {
-    const deletedJobs = await prisma.pekerjaan.delete({
+    return await prisma.pekerjaan.update({
+      where: { id: jobId },
+      data: jobData,
+    });
+  } catch (error) {
+    throw new Error(`Failed to update job: ${error.message}`);
+  }
+};
+const DeleteJobsById = async (jobId) => {
+  try {
+    return await prisma.pekerjaan.delete({
       where: {
-        id: id,
+        id: jobId,
       },
     });
-    return deletedJobs;
   } catch (error) {
-    throw new Error(`Failed to delete jobs: ${error.message}`);
+    throw new Error(`Failed to delete job: ${error.message}`);
   }
 };
 

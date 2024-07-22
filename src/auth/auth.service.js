@@ -16,7 +16,7 @@ async function authenticateUser(nis, password) {
     }
 
     // Bandingkan password yang diterima dengan password yang di-hash di database
-    const passwordMatch = await bcrypt.compare(password, user.kataSandi);
+    const passwordMatch = await bcrypt.compare(password, user.katasandi);
 
     // Jika password tidak cocok, kirimkan pesan error
     if (!passwordMatch) {
@@ -40,13 +40,13 @@ async function authenticateUser(nis, password) {
 async function registerUser(data) {
   try {
     // Hash password sebelum menyimpan ke database
-    const hashedPassword = await bcrypt.hash(data.kataSandi, 10);
+    const hashedPassword = await bcrypt.hash(data.katasandi, 10);
 
     // Buat pengguna baru menggunakan Prisma
     const newUser = await prisma.pengguna.create({
       data: {
         email: data.email,
-        kataSandi: hashedPassword,
+        katasandi: hashedPassword,
         nama: data.nama,
         alamat: data.alamat,
         nomortelepon: data.nomortelepon,

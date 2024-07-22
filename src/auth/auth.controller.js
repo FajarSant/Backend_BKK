@@ -9,10 +9,10 @@ const router = express.Router();
 // Endpoint untuk register pengguna dan upload gambar
 router.post("/register", upload.single("gambar"), async (req, res) => {
   try {
-    const { email, kataSandi, nama, alamat, nomortelepon, peran, jurusan, nis } = req.body;
+    const { email, katasandi, nama, alamat, nomortelepon, peran, jurusan, nis } = req.body;
 
     // Validasi data yang diterima
-    if (!email || !kataSandi || !nama || !alamat || !nomortelepon || !peran || !jurusan || !nis) {
+    if (!email || !katasandi || !nama || !alamat || !nomortelepon || !peran || !jurusan || !nis) {
       throw new Error("Semua field harus diisi");
     }
 
@@ -24,7 +24,7 @@ router.post("/register", upload.single("gambar"), async (req, res) => {
     // Panggil fungsi registerUser untuk membuat pengguna baru
     const { token, user } = await registerUser({
       email,
-      kataSandi,
+      katasandi,
       nama,
       alamat,
       nomortelepon,
@@ -45,15 +45,15 @@ router.post("/register", upload.single("gambar"), async (req, res) => {
 // Endpoint untuk proses login
 router.post("/login", async (req, res) => {
   try {
-    const { nis, kataSandi } = req.body;
+    const { nis, katasandi } = req.body;
 
-    // Pastikan NIS dan kataSandi tersedia
-    if (!nis || !kataSandi) {
+    // Pastikan NIS dan katasandi tersedia
+    if (!nis || !katasandi) {
       throw new Error("NIS dan kata sandi diperlukan");
     }
 
     // Panggil fungsi authenticateUser untuk verifikasi user
-    const { token, user } = await authenticateUser(nis, kataSandi);
+    const { token, user } = await authenticateUser(nis, katasandi);
 
     // Kirim respons dengan token dan data user
     res.json({ token, user });
@@ -105,7 +105,7 @@ router.get("/me", authenticateJWT, async (req, res) => {
             pekerjaan: {
               select: {
                 id: true,
-                judul: true,
+                namaPT: true,
               },
             },
             status: true,
@@ -118,7 +118,7 @@ router.get("/me", authenticateJWT, async (req, res) => {
             pekerjaan: {
               select: {
                 id: true,
-                judul: true,
+                namaPT: true,
               },
             },
           },

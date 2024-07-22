@@ -31,7 +31,7 @@ const GetAllUsers = async () => {
           select: {
             pekerjaan: {
               select: {
-                judul: true,
+                namaPT: true,
               },
             },
           },
@@ -135,14 +135,24 @@ const UpdateUserById = async (id, userData) => {
   }
 };
 
-// Delete user by ID
 const DeleteUserById = async (id) => {
   try {
+    // Check if the user exists
     const user = await prisma.pengguna.findUnique({ where: { id } });
 
     if (!user) {
       throw new Error('User not found');
     }
+
+    // Delete associated lamaran (applications)
+    await prisma.lamaran.deleteMany({
+      where: { penggunaId: id },
+    });
+
+    // Delete associated lowonganTersimpan (saved job listings)
+    await prisma.lowonganTersimpan.deleteMany({
+      where: { penggunaId: id },
+    });
 
     // Delete user's image if it exists
     if (user.gambar) {
@@ -165,6 +175,7 @@ const DeleteUserById = async (id) => {
   }
 };
 
+
 // Import users from Excel
 const importUsersFromExcel = async (filePath) => {
   try {
@@ -174,21 +185,43 @@ const importUsersFromExcel = async (filePath) => {
     const data = XLSX.utils.sheet_to_json(sheet);
 
     for (const row of data) {
-      console.log(row);
+      // Ensure all fields are present
+      const {
+        NIS,
+        email,
+        nama,
+        kataSandi,
+        tanggallahir,
+        alamat,
+        nomorTelepon,
+        peran,
+        jurusan,
+        gambar = null // Set default value if not present
+      } = row;
 
-      const hashedPassword = await bcrypt.hash(row.katasandi.toString(), 10);
+      if (
+        NIS === undefined || email === undefined || nama === undefined ||
+        kataSandi === undefined || tanggallahir === undefined || alamat === undefined ||
+        nomorTelepon === undefined || peran === undefined || jurusan === undefined
+      ) {
+        console.error("Missing required user fields", row);
+        continue; // Skip this user if any required field is missing
+      }
+
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(kataSandi.toString(), 10);
 
       await prisma.pengguna.create({
         data: {
-          nama: row.nama,
-          email: row.email,
-          NIS: row.NIS.toString(),
+          nama: nama.toString(),
+          email: email.toString(),
+          NIS: NIS.toString(),
           katasandi: hashedPassword,
-          alamat: row.alamat,
-          nomortelepon: row.nomorTelepon.toString(),
-          peran: row.peran,
-          jurusan: row.jurusan,
-          gambar: row.gambar || null,
+          alamat: alamat.toString(),
+          nomortelepon: nomorTelepon.toString(),
+          peran: peran.toString(),
+          jurusan: jurusan.toString(),
+          gambar: gambar ? gambar.toString() : null,
         },
       });
     }

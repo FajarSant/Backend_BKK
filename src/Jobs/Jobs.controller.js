@@ -2,7 +2,7 @@ const express = require("express");
 const prisma = require("../db");
 const path = require('path');
 const fs = require('fs');
-const { uploadImage} = require ('./jobs.middleware')
+const { uploadImage, cleanAndParseArrayString} = require ('./jobs.middleware')
 const {
   GetAllJobs,
   GetJobsById,
@@ -39,11 +39,12 @@ router.post("/", uploadImage.single("gambar"), async (req, res) => {
     const file = req.file;
     const imageUrl = file ? `http://localhost:${process.env.PORT || 2000}/uploads/lamaran/${file.filename}` : null;
 
+    // Memproses data baru dengan membersihkan dan memparsing persyaratan dan openrekrutmen
     const newJobData = {
       ...req.body,
       gambar: imageUrl,
-      persyaratan: req.body.persyaratan ? req.body.persyaratan.split(',') : [],
-      openrekrutmen: req.body.openrekrutmen ? req.body.openrekrutmen.split(',') : []
+      persyaratan: cleanAndParseArrayString(req.body.persyaratan),
+      openrekrutmen: cleanAndParseArrayString(req.body.openrekrutmen)
     };
 
     if (!newJobData.namaPT || !newJobData.deskripsi || !newJobData.alamat || !newJobData.email || !newJobData.nomorTelepon) {
@@ -84,12 +85,16 @@ router.put("/:id", uploadImage.single("gambar"), async (req, res) => {
       }
     }
 
+    // Convert persyaratan and openrekrutmen to arrays if they are strings
+    const persyaratan = typeof req.body.persyaratan === 'string' ? req.body.persyaratan.split(',') : req.body.persyaratan;
+    const openrekrutmen = typeof req.body.openrekrutmen === 'string' ? req.body.openrekrutmen.split(',') : req.body.openrekrutmen;
+
     // Update data pekerjaan
     const updatedJobData = {
       ...req.body,
       gambar: imageUrl || oldJob.gambar, // Gunakan gambar baru jika ada, jika tidak, gunakan gambar lama
-      persyaratan: req.body.persyaratan ? req.body.persyaratan.split(',') : oldJob.persyaratan,
-      openrekrutmen: req.body.openrekrutmen ? req.body.openrekrutmen.split(',') : oldJob.openrekrutmen
+      persyaratan: persyaratan || oldJob.persyaratan,
+      openrekrutmen: openrekrutmen || oldJob.openrekrutmen
     };
 
     const updatedJob = await UpdateJobsById(jobId, updatedJobData);
@@ -103,7 +108,6 @@ router.put("/:id", uploadImage.single("gambar"), async (req, res) => {
     res.status(400).json({ message: "Failed to update job", error: error.message });
   }
 });
-
 
 router.delete("/:id", async (req, res) => {
   try {

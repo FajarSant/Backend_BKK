@@ -30,6 +30,24 @@ const uploadImage = multer({
   },
 });
 
+const cleanAndParseArrayString = (inputString) => {
+    if (!inputString) return [];
+    
+    try {
+      // Menghilangkan karakter backslash dan tanda kutip yang tidak diperlukan
+      const cleanedString = inputString
+        .replace(/\\+/g, '') // Menghapus semua backslash
+        .replace(/^\[|\]$/g, '') // Menghapus tanda kurung pada awal dan akhir string
+        .split(/","|",\s*"/) // Membagi string berdasarkan pemisah yang sesuai
+        .map(item => item.replace(/\"/g, '')); // Menghapus tanda kutip di sekitar elemen
+      
+      return cleanedString;
+    } catch (error) {
+      console.error("Error parsing array string:", error);
+      return [];
+    }
+  };
 module.exports = {
   uploadImage,
+  cleanAndParseArrayString
 };

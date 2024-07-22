@@ -63,6 +63,7 @@ const UpdateJobsById = async (jobId, jobData) => {
     throw new Error(`Failed to update job: ${error.message}`);
   }
 };
+
 const DeleteJobsById = async (jobId) => {
   try {
     return await prisma.pekerjaan.delete({

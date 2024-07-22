@@ -24,7 +24,7 @@ router.post('/import', uploadExcel.single('file'), async (req, res) => {
     const filePath = path.join(__dirname, '../uploads/excel', req.file.filename);
     const result = await importUsersFromExcel(filePath);
 
-    // Hapus file setelah diimpor
+    // Delete file after import
     fs.unlinkSync(filePath);
 
     res.json(result);
@@ -138,5 +138,6 @@ router.delete("/:id", async (req, res) => {
     res.status(500).json({ message: "Failed to delete user", error: error.message });
   }
 });
+
 
 module.exports = router;

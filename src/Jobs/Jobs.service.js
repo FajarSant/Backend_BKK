@@ -10,6 +10,7 @@ const GetAllJobs = async () => {
       persyaratan:true,
       openrekrutmen:true,
       alamat:true,
+      jenis:true,
       nomorTelepon:true,
       email:true,
       Link:true,
@@ -36,6 +37,7 @@ const CreateJobs = async (jobData) => {
       data: {
         namaPT: jobData.namaPT,
         deskripsi: jobData.deskripsi,
+        jenis: jobData.jenis,
         berkas: jobData.berkas,
         persyaratan: jobData.persyaratan,
         openrekrutmen: jobData.openrekrutmen,

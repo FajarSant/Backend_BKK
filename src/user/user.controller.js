@@ -21,7 +21,7 @@ router.post('/import', uploadExcel.single('file'), async (req, res) => {
       return res.status(400).send("Please upload an Excel file.");
     }
 
-    const filePath = path.join(__dirname, '../uploads/excel', req.file.filename);
+    const filePath = path.join(__dirname, '../../uploads/excel', req.file.filename);
     const result = await importUsersFromExcel(filePath);
 
     // Delete file after import

@@ -30,14 +30,15 @@ router.post('/', async (req, res) => {
   }
 
   try {
+    // Ensure IDs are correctly formatted before sending to service
     const newLamaran = await lamaranService.createLamaran({
-      pekerjaanId,
-      penggunaId,
+      pekerjaanId: pekerjaanId.trim().replace(/[^a-fA-F0-9]/g, ''),
+      penggunaId: penggunaId.trim().replace(/[^a-fA-F0-9]/g, ''),
     });
     res.json(newLamaran);
   } catch (error) {
-    console.error("Error creating lowongan tersimpan:", error);
-    res.status(500).json({ message: 'Error creating lowongan tersimpan' });
+    console.error("Error creating lamaran:", error);
+    res.status(500).json({ message: 'Error creating lamaran' });
   }
 });
 

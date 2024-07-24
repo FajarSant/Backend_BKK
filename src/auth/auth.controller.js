@@ -9,10 +9,28 @@ const router = express.Router();
 // Endpoint untuk register pengguna dan upload gambar
 router.post("/register", upload.single("gambar"), async (req, res) => {
   try {
-    const { email, katasandi, nama, alamat, nomortelepon, peran, jurusan, nis } = req.body;
+    const {
+      email,
+      katasandi,
+      nama,
+      alamat,
+      nomortelepon,
+      peran,
+      jurusan,
+      nis,
+    } = req.body;
 
     // Validasi data yang diterima
-    if (!email || !katasandi || !nama || !alamat || !nomortelepon || !peran || !jurusan || !nis) {
+    if (
+      !email ||
+      !katasandi ||
+      !nama ||
+      !alamat ||
+      !nomortelepon ||
+      !peran ||
+      !jurusan ||
+      !nis
+    ) {
       throw new Error("Semua field harus diisi");
     }
 
@@ -97,6 +115,7 @@ router.get("/me", authenticateJWT, async (req, res) => {
         alamat: true,
         nomortelepon: true,
         gambar: true,
+        NIS: true,
         peran: true,
         jurusan: true,
         lamaran: {

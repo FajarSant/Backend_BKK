@@ -36,6 +36,9 @@ app.use('/savejobs', savejobscontroller)
 const Jobscontroller = require("./Jobs/Jobs.controller");
 app.use('/jobs', Jobscontroller);
 
+const pelatihancontroller = require("./pelatihan/pelatihan.controllers");
+app.use('/pelatihan', pelatihancontroller);
+
 const authController = require("./auth/auth.controller");
 app.use('/auth', authController);
 

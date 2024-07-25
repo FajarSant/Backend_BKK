@@ -46,6 +46,7 @@ model Pekerjaan {
   email             String
   nomorTelepon      String
   Link              String
+  tanggalDibuat     DateTime            @default(now())
   lamaran           Lamaran[]
   lowonganTersimpan LowonganTersimpan[]
 }
@@ -66,7 +67,7 @@ model Pelatihan {
   gambar        String?
   alamat        String
   deskripsi     String
-  administrasi  String
+  administrasi  String[]
   skills        String[]
   fasilitas     String[]
   nomortelepon  String

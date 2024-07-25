@@ -9,6 +9,7 @@ const GetAllJobs = async () => {
       deskripsi:true,
       persyaratan:true,
       openrekrutmen:true,
+      tanggalDibuat:true,
       alamat:true,
       jenis:true,
       nomorTelepon:true,

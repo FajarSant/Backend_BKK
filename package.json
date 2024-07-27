@@ -6,7 +6,7 @@
   "scripts": {
     "start": "nodemon src/index.js",
     "postinstall": "prisma generate",
-    "build": "prisma generate"
+    "build": "prisma generate && mkdir -p public && cp -r src/* public/"
   },
   "keywords": [],
   "author": "",

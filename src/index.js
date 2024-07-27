@@ -24,7 +24,7 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 // Import controller
 const userController = require("./user/user.controller");
 const applicationController = require("./application/application.controller");
-const saveJobsController = require("./savejobs/savejobs.controller");
+const saveJobsController = require("./savejobs/savejobs.controllers");
 const jobsController = require("./jobs/jobs.controller");
 const pelatihanController = require("./pelatihan/pelatihan.controller");
 const authController = require("./auth/auth.controller");

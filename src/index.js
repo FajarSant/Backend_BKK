@@ -25,8 +25,8 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 const userController = require("./user/user.controller");
 const applicationController = require("./application/application.controller");
 const saveJobsController = require("./savejobs/savejobs.controllers");
-const jobsController = require("./jobs/jobs.controller");
-const pelatihanController = require("./pelatihan/pelatihan.controller");
+const jobsController = require("./Jobs/Jobs.controller");
+const pelatihanController = require("./pelatihan/pelatihan.controllers");
 const authController = require("./auth/auth.controller");
 
 // Route

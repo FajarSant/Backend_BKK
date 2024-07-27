@@ -8,8 +8,28 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/src/$1.js"
+      "src": "/api/users/(.*)",
+      "dest": "/src/user/$1.js"
+    },
+    {
+      "src": "/api/application/(.*)",
+      "dest": "/src/application/$1.js"
+    },
+    {
+      "src": "/api/savejobs/(.*)",
+      "dest": "/src/savejobs/$1.js"
+    },
+    {
+      "src": "/api/jobs/(.*)",
+      "dest": "/src/Jobs/$1.js"
+    },
+    {
+      "src": "/api/pelatihan/(.*)",
+      "dest": "/src/pelatihan/$1.js"
+    },
+    {
+      "src": "/api/auth/(.*)",
+      "dest": "/src/auth/$1.js"
     }
   ]
 }

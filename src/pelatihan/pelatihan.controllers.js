@@ -40,7 +40,7 @@ router.get("/:id", async (req, res) => {
 router.post("/", uploadImage.single("gambar"), async (req, res) => {
   try {
     const file = req.file;
-    const imageUrl = file ? `http://localhost:${process.env.PORT || 2000}/uploads/pelatihan/${file.filename}` : null;
+    const imageUrl = file ? `https://backend-bkk.vercel.app/uploads/pelatihan/${file.filename}` : null;
 
     const newPelatihanData = {
       ...req.body,
@@ -63,7 +63,7 @@ router.put("/:id", uploadImage.single("gambar"), async (req, res) => {
   try {
     const pelatihanId = req.params.id;
     const file = req.file;
-    const imageUrl = file ? `http://localhost:${process.env.PORT || 2000}/uploads/pelatihan/${file.filename}` : req.body.gambar;
+    const imageUrl = file ? `https://backend-bkk.vercel.app/uploads/pelatihan/${file.filename}` : null;
 
     const updatedPelatihanData = {
       ...req.body,

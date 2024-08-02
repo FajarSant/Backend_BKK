@@ -63,7 +63,7 @@ router.post("/", uploadImage.single("gambar"), async (req, res) => {
     const file = req.file;
 
     // Handle image upload
-    const imageUrl = file ? `https://backend-bkk.vercel.app/uploads/users/${file.filename}` : null;
+    const imageUrl = file ? `http://localhost:${process.env.PORT || 2000}/uploads/users/${file.filename}` : null;
 
     const newUserData = {
       ...req.body,

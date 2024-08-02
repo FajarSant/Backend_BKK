@@ -39,7 +39,7 @@ router.get("/:id", async (req, res) => {
 router.post("/", uploadImage.single("gambar"), async (req, res) => {
   try {
     const file = req.file;
-    const imageUrl = file ? `https://backend-bkk.vercel.app/uploads/lamaran/${file.filename}` : null;
+    const imageUrl = file ? `http://localhost:2000/uploads/lamaran/${file.filename}` : null;
 
     // Memproses data baru dengan membersihkan dan memparsing persyaratan dan openrekrutmen
     const newJobData = {
@@ -77,7 +77,7 @@ router.put("/:id", uploadImage.single("gambar"), async (req, res) => {
     }
 
     // Tentukan URL gambar baru
-    const imageUrl = file ? `https://backend-bkk.vercel.app/uploads/lamaran/${file.filename}` : null;
+    const imageUrl = file ? `http://localhost:2000/uploads/lamaran/${file.filename}` : null;
     // Jika ada gambar lama, hapus gambar tersebut
     if (oldJob.gambar && imageUrl) {
       const oldImagePath = path.join(__dirname, '../uploads/lamaran', path.basename(oldJob.gambar));

@@ -1,8 +1,9 @@
-const prisma = require("../db");
+const prisma = require('../db');
+const cloudinary = require('../config/Cloudinary');
 
 const GetAllJobs = async () => {
   try {
-    const jobs = await prisma.pekerjaan.findMany({
+    return await prisma.pekerjaan.findMany({
       select: {
         id: true,
         gambar: true,
@@ -16,10 +17,9 @@ const GetAllJobs = async () => {
         nomorTelepon: true,
         email: true,
         Link: true,
-        berkas: true
+        berkas: true,
       },
     });
-    return jobs;
   } catch (error) {
     throw new Error(`Failed to get all jobs: ${error.message}`);
   }
@@ -39,22 +39,9 @@ const GetJobsById = async (jobId) => {
 const CreateJobs = async (jobData) => {
   try {
     if (!jobData) throw new Error('Job data is required');
-    const newJob = await prisma.pekerjaan.create({
-      data: {
-        namaPT: jobData.namaPT,
-        deskripsi: jobData.deskripsi,
-        jenis: jobData.jenis,
-        berkas: jobData.berkas,
-        persyaratan: jobData.persyaratan,
-        openrekrutmen: jobData.openrekrutmen,
-        gambar: jobData.gambar,
-        alamat: jobData.alamat,
-        email: jobData.email,
-        nomorTelepon: jobData.nomorTelepon,
-        Link: jobData.Link,
-      },
+    return await prisma.pekerjaan.create({
+      data: jobData,
     });
-    return newJob;
   } catch (error) {
     throw new Error(`Failed to create job: ${error.message}`);
   }
@@ -62,8 +49,7 @@ const CreateJobs = async (jobData) => {
 
 const UpdateJobsById = async (jobId, jobData) => {
   try {
-    if (!jobId) throw new Error('Job ID is required');
-    if (!jobData) throw new Error('Job data is required');
+    if (!jobId || !jobData) throw new Error('Job ID and data are required');
     return await prisma.pekerjaan.update({
       where: { id: jobId },
       data: jobData,
@@ -73,6 +59,16 @@ const UpdateJobsById = async (jobId, jobData) => {
   }
 };
 
+const DeleteJobsById = async (jobId) => {
+  try {
+    if (!jobId) throw new Error('Job ID is required');
+    return await prisma.pekerjaan.delete({
+      where: { id: jobId },
+    });
+  } catch (error) {
+    throw new Error(`Failed to delete job: ${error.message}`);
+  }
+};
 const DeleteApplicationsByJobId = async (jobId) => {
   try {
     if (!jobId) throw new Error('Job ID is required');
@@ -96,33 +92,6 @@ const DeleteSavedApplicationsByJobId = async (jobId) => {
     });
   } catch (error) {
     throw new Error(`Failed to delete saved applications: ${error.message}`);
-  }
-};
-
-const DeleteJobsById = async (jobId) => {
-  try {
-    if (!jobId) throw new Error('Job ID is required');
-
-    const job = await prisma.pekerjaan.findUnique({
-      where: { id: jobId },
-    });
-
-    if (!job) throw new Error('Job not found');
-
-    await DeleteApplicationsByJobId(jobId);
-    await DeleteSavedApplicationsByJobId(jobId);
-
-    if (job.fileId) {
-      await deleteFromGoogleDrive(job.fileId);
-    }
-
-    const deletedJob = await prisma.pekerjaan.delete({
-      where: { id: jobId },
-    });
-
-    return deletedJob;
-  } catch (error) {
-    throw new Error(`Failed to delete job: ${error.message}`);
   }
 };
 

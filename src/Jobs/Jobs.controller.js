@@ -1,8 +1,6 @@
+// Jobs.controller.js
 const express = require("express");
-const prisma = require("../db");
-const path = require('path');
-const fs = require('fs');
-const { uploadImage, cleanAndParseArrayString} = require ('./jobs.middleware')
+const { upload, uploadImage, cleanAndParseArrayString } = require('./jobs.middleware');
 const {
   GetAllJobs,
   GetJobsById,
@@ -12,41 +10,46 @@ const {
   DeleteApplicationsByJobId,
   DeleteSavedApplicationsByJobId,
 } = require("./Jobs.service");
+const cloudinary = require('../config/Cloudinary');
 
 const router = express.Router();
 
 router.get("/", async (req, res) => {
-  const lamaran = await GetAllJobs();
-  res.send(lamaran);
+  try {
+    const jobs = await GetAllJobs();
+    res.send(jobs);
+  } catch (error) {
+    console.error("Error getting jobs:", error);
+    res.status(500).send("Failed to get jobs");
+  }
 });
 
 router.get("/:id", async (req, res) => {
   try {
-    const jobsId = req.params.id;
-    const Jobs = await GetJobsById(jobsId);
+    const jobId = req.params.id;
+    const job = await GetJobsById(jobId);
 
-    if (!Jobs) {
-      throw new Error("Post Not Found");
+    if (!job) {
+      throw new Error("Job not found");
     }
 
-    res.send(Jobs);
+    res.send(job);
   } catch (error) {
-    console.error("Error getting post:", error);
-    res.status(404).send("Post not found");
+    console.error("Error getting job:", error);
+    res.status(404).send("Job not found");
   }
 });
 
-router.post("/", uploadImage.single("gambar"), async (req, res) => {
+router.post("/", upload.single("gambar"), uploadImage, async (req, res) => {
   try {
     const file = req.file;
-    const imageUrl = file ? `http://localhost:2000/uploads/lamaran/${file.filename}` : null;
+    const imageUrl = file ? file.cloudinary.secure_url : null;
 
-    // Memproses data baru dengan membersihkan dan memparsing persyaratan dan openrekrutmen
     const newJobData = {
       ...req.body,
       gambar: imageUrl,
       persyaratan: cleanAndParseArrayString(req.body.persyaratan),
-      openrekrutmen: cleanAndParseArrayString(req.body.openrekrutmen)
+      openrekrutmen: cleanAndParseArrayString(req.body.openrekrutmen),
     };
 
     if (!newJobData.namaPT || !newJobData.deskripsi || !newJobData.alamat || !newJobData.email || !newJobData.nomorTelepon) {
@@ -65,37 +68,32 @@ router.post("/", uploadImage.single("gambar"), async (req, res) => {
   }
 });
 
-router.put("/:id", uploadImage.single("gambar"), async (req, res) => {
+router.put("/:id", upload.single("gambar"), uploadImage, async (req, res) => {
   try {
     const jobId = req.params.id;
     const file = req.file;
 
-    // Ambil pekerjaan yang ada
     const oldJob = await GetJobsById(jobId);
     if (!oldJob) {
       return res.status(404).json({ message: "Job not found" });
     }
 
-    // Tentukan URL gambar baru
-    const imageUrl = file ? `http://localhost:2000/uploads/lamaran/${file.filename}` : null;
-    // Jika ada gambar lama, hapus gambar tersebut
-    if (oldJob.gambar && imageUrl) {
-      const oldImagePath = path.join(__dirname, '../uploads/lamaran', path.basename(oldJob.gambar));
-      if (fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath);
+    let imageUrl = oldJob.gambar;
+    if (file) {
+      // Delete old image if exists
+      if (oldJob.gambar) {
+        const publicId = oldJob.gambar.split('/').pop().split('.')[0];
+        await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
       }
+      // Upload new image
+      imageUrl = file.cloudinary.secure_url;
     }
 
-    // Convert persyaratan and openrekrutmen to arrays if they are strings
-    const persyaratan = typeof req.body.persyaratan === 'string' ? req.body.persyaratan.split(',') : req.body.persyaratan;
-    const openrekrutmen = typeof req.body.openrekrutmen === 'string' ? req.body.openrekrutmen.split(',') : req.body.openrekrutmen;
-
-    // Update data pekerjaan
     const updatedJobData = {
       ...req.body,
-      gambar: imageUrl || oldJob.gambar, // Gunakan gambar baru jika ada, jika tidak, gunakan gambar lama
-      persyaratan: persyaratan || oldJob.persyaratan,
-      openrekrutmen: openrekrutmen || oldJob.openrekrutmen
+      gambar: imageUrl,
+      persyaratan: cleanAndParseArrayString(req.body.persyaratan),
+      openrekrutmen: cleanAndParseArrayString(req.body.openrekrutmen),
     };
 
     const updatedJob = await UpdateJobsById(jobId, updatedJobData);
@@ -113,33 +111,49 @@ router.put("/:id", uploadImage.single("gambar"), async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const jobId = req.params.id;
+
+    // Retrieve the job record to get the publicId
     const job = await GetJobsById(jobId);
 
     if (!job) {
       return res.status(404).json({ message: "Job not found" });
     }
 
-    // Hapus gambar yang terkait dengan pekerjaan jika ada
-    if (job.gambar) {
-      const imagePath = path.join(__dirname, '../../uploads/lamaran', path.basename(job.gambar));
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-      }
+    // Extract the publicId from the image URL and decode URL components
+    const publicId = job.gambar ? `lamaran/${decodeURIComponent(job.gambar.split('/').pop().split('.')[0])}` : null;
+
+    if (!publicId) {
+      return res.status(400).json({ message: "No image found to delete" });
     }
 
-    // Hapus lamaran dan lamaran tersimpan yang terkait dengan pekerjaan
+    console.log(`Attempting to delete image with public_id: ${publicId}`);
+
+    // Delete the image from Cloudinary
+    const result = await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+    console.log('Cloudinary delete result:', result);
+
+    if (result.result !== 'ok' && result.result !== 'not found') {
+      throw new Error(`Failed to delete image from Cloudinary: ${result.error?.message || 'Unknown error'}`);
+    }
+
+    // Delete related applications and saved jobs
     await DeleteApplicationsByJobId(jobId);
     await DeleteSavedApplicationsByJobId(jobId);
 
-    // Hapus pekerjaan dari database
-    await DeleteJobsById(jobId);
+    // Delete the job record
+    const deletedJob = await DeleteJobsById(jobId);
 
-    res.status(200).json({ message: "Job successfully deleted" });
+    res.status(200).json({
+      data: deletedJob,
+      message: "Job successfully deleted",
+    });
   } catch (error) {
     console.error("Error deleting job:", error);
-    res.status(400).json({ message: "Failed to delete job", error: error.message });
+    res.status(400).json({
+      message: "Failed to delete job",
+      error: error.message || 'An unexpected error occurred',
+    });
   }
 });
-
 
 module.exports = router;

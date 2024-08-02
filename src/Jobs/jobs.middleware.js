@@ -1,53 +1,73 @@
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const cloudinary = require('../config/Cloudinary');
+const streamifier = require('streamifier');
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "./uploads/lamaran"); 
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const extension = path.extname(file.originalname);
-    
-    // Validasi dan penanganan email dan namaPT
-    const namaPT = req.body.namaPT ? req.body.namaPT.replace(/\s+/g, '_') : 'defaultPT';
-    cb(null, `${namaPT}_${extension}`);
-  },
-});
+const storage = multer.memoryStorage();
 
-const uploadImage = multer({
+const upload = multer({
   storage: storage,
-  fileFilter: function (req, file, cb) {
-    // Pastikan file yang diunggah adalah gambar
-    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
-      return cb(new Error("Only image files are allowed!"), false);
-    }
-    cb(null, true);
-  },
   limits: {
-    fileSize: 1024 * 1024 * 5, 
+    fileSize: 1024 * 1024 * 5, // 5MB file size limit
   },
 });
+
+const uploadImage = (req, res, next) => {
+  if (!req.file) {
+    return next();
+  }
+
+  const uploadStream = (file, publicId) => {
+    return new Promise((resolve, reject) => {
+      const upload_stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'lamaran',
+          allowed_formats: ['jpg', 'jpeg', 'png'],
+          public_id: publicId, // Use publicId as filename
+        },
+        (error, result) => {
+          if (result) {
+            resolve(result);
+          } else {
+            reject(error);
+          }
+        }
+      );
+      streamifier.createReadStream(file.buffer).pipe(upload_stream);
+    });
+  };
+
+  // Use a more unique identifier for filename, replacing spaces and special characters
+  const publicId = req.body.namaPT ? `${req.body.namaPT.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9\-]/g, '')}` : 'lamaran/defaultPT';
+  uploadStream(req.file, publicId)
+    .then(result => {
+      req.file.cloudinary = result;
+      next();
+    })
+    .catch(error => {
+      console.error("Error uploading image to Cloudinary:", error);
+      next(error);
+    });
+};
 
 const cleanAndParseArrayString = (inputString) => {
-    if (!inputString) return [];
+  if (!inputString) return [];
+  
+  try {
+    const cleanedString = inputString
+      .replace(/\\+/g, '')
+      .replace(/^\[|\]$/g, '')
+      .split(/","|",\s*"/)
+      .map(item => item.replace(/\"/g, ''));
     
-    try {
-      // Menghilangkan karakter backslash dan tanda kutip yang tidak diperlukan
-      const cleanedString = inputString
-        .replace(/\\+/g, '') // Menghapus semua backslash
-        .replace(/^\[|\]$/g, '') // Menghapus tanda kurung pada awal dan akhir string
-        .split(/","|",\s*"/) // Membagi string berdasarkan pemisah yang sesuai
-        .map(item => item.replace(/\"/g, '')); // Menghapus tanda kutip di sekitar elemen
-      
-      return cleanedString;
-    } catch (error) {
-      console.error("Error parsing array string:", error);
-      return [];
-    }
-  };
+    return cleanedString;
+  } catch (error) {
+    console.error("Error parsing array string:", error);
+    return [];
+  }
+};
+
 module.exports = {
   uploadImage,
-  cleanAndParseArrayString
+  upload,
+  cleanAndParseArrayString,
 };

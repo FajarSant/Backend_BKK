@@ -180,15 +180,17 @@ const DeleteUserById = async (id) => {
 const importUsersFromExcel = async (data) => {
   try {
     for (const row of data) {
+      console.log("Received row:", row); // Tambahkan ini untuk memeriksa data yang diterima
+
       // Ensure all fields are present
       const {
         NIS,
         email,
         nama,
-        kataSandi,
+        katasandi,
         tanggallahir,
         alamat,
-        nomorTelepon,
+        nomorTelepon, // Pastikan field ini sesuai dengan data yang dikirim
         peran,
         jurusan,
         gambar = null // Set default value if not present
@@ -196,7 +198,7 @@ const importUsersFromExcel = async (data) => {
 
       if (
         NIS === undefined || email === undefined || nama === undefined ||
-        kataSandi === undefined || tanggallahir === undefined || alamat === undefined ||
+        katasandi === undefined || tanggallahir === undefined || alamat === undefined ||
         nomorTelepon === undefined || peran === undefined || jurusan === undefined
       ) {
         console.error("Missing required user fields", row);
@@ -204,16 +206,17 @@ const importUsersFromExcel = async (data) => {
       }
 
       // Hash the password
-      const hashedPassword = await bcrypt.hash(kataSandi.toString(), 10);
+      const hashedPassword = await bcrypt.hash(katasandi.toString(), 10);
 
       await prisma.pengguna.create({
         data: {
-          nama: nama.toString(),
-          email: email.toString(),
           NIS: NIS.toString(),
+          email: email.toString(),
+          nama: nama.toString(),
           katasandi: hashedPassword,
+          tanggallahir: new Date(tanggallahir), // Convert tanggallahir to Date
           alamat: alamat.toString(),
-          nomortelepon: nomorTelepon.toString(),
+          nomortelepon: nomorTelepon.toString(), // Pastikan ini sesuai dengan schema di database
           peran: peran.toString(),
           jurusan: jurusan.toString(),
           gambar: gambar ? gambar.toString() : null,
@@ -227,6 +230,7 @@ const importUsersFromExcel = async (data) => {
     throw new Error(`Error importing users from Excel: ${error.message}`);
   }
 };
+
 
 module.exports = {
   GetAllUsers,

@@ -1,38 +1,19 @@
 const express = require("express");
 const prisma = require("../db");
-const fs = require('fs');
-const path = require('path');
-const multer = require('multer');
-const { uploadExcel, uploadImage } = require("./user.middleware")
+const { uploadImage, upload } = require("./user.middleware");
 const {
   GetAllUsers,
   GetUserById,
   CreateUsers,
   UpdateUserById,
   DeleteUserById,
-  importUsersFromExcel
+  importUsersFromExcel,
 } = require("./user.service");
 
+const XLSX = require("xlsx");
+const cloudinary = require('../config/Cloudinary');
+
 const router = express.Router();
-
-router.post('/import', uploadExcel.single('file'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).send("Please upload an Excel file.");
-    }
-
-    const filePath = path.join(__dirname, '../../uploads/excel', req.file.filename);
-    const result = await importUsersFromExcel(filePath);
-
-    // Delete file after import
-    fs.unlinkSync(filePath);
-
-    res.json(result);
-  } catch (error) {
-    console.error("Error importing users from Excel:", error);
-    res.status(500).json({ message: "Failed to import data from Excel.", error: error.message });
-  }
-});
 
 router.get("/", async (req, res) => {
   try {
@@ -58,12 +39,12 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/", uploadImage.single("gambar"), async (req, res) => {
+router.post("/", upload.single("gambar"), uploadImage, async (req, res) => {
   try {
     const file = req.file;
 
     // Handle image upload
-    const imageUrl = file ? `http://localhost:${process.env.PORT || 2000}/uploads/users/${file.filename}` : null;
+    const imageUrl = file ? file.cloudinary.url : null;
 
     const newUserData = {
       ...req.body,
@@ -83,8 +64,26 @@ router.post("/", uploadImage.single("gambar"), async (req, res) => {
   }
 });
 
+router.post("/excel", upload.single("file"), async (req, res) => {
+  const fileBuffer = req.file.buffer;
 
-router.put('/:id', uploadImage.single('gambar'), async (req, res) => {
+  try {
+    // Baca file Excel dari buffer
+    const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const data = XLSX.utils.sheet_to_json(sheet);
+
+    // Panggil fungsi untuk mengimpor pengguna
+    const result = await importUsersFromExcel(data);
+    res.status(201).json(result);
+  } catch (error) {
+    console.error("Error importing users:", error);
+    res.status(500).json({ message: "Failed to import users", error: error.message });
+  }
+});
+
+router.put('/:id', upload.single('gambar'), uploadImage, async (req, res) => {
   const userId = req.params.id;
 
   try {
@@ -100,11 +99,8 @@ router.put('/:id', uploadImage.single('gambar'), async (req, res) => {
     let imageUrl;
 
     if (file) {
-      imageUrl = `http://localhost:${process.env.PORT || 2000}/uploads/users/${file.filename}`;
-      
-      
+      imageUrl = file.cloudinary.url;
     }
-    
 
     const updatedUserData = {
       ...req.body,
@@ -126,12 +122,33 @@ router.put('/:id', uploadImage.single('gambar'), async (req, res) => {
 router.delete("/:id", async (req, res) => {
   const userId = req.params.id;
   try {
+    // Retrieve the user to get the image URL
+    const user = await GetUserById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Extract the publicId from the image URL
+    const publicId = user.gambar ? `users/${decodeURIComponent(user.gambar.split('/').pop().split('.')[0])}` : null;
+
+    // Delete the user record
     const deletedUser = await DeleteUserById(userId);
     if (!deletedUser) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    // Delete the image from Cloudinary if it exists
+    if (publicId) {
+      const result = await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+      console.log('Cloudinary delete result:', result);
+
+      if (result.result !== 'ok' && result.result !== 'not found') {
+        throw new Error(`Failed to delete image from Cloudinary: ${result.error?.message || 'Unknown error'}`);
+      }
+    }
+
     res.json({
-      message: "User successfully deleted",
+      message: "User and image successfully deleted",
       data: deletedUser,
     });
   } catch (error) {
@@ -139,6 +156,5 @@ router.delete("/:id", async (req, res) => {
     res.status(500).json({ message: "Failed to delete user", error: error.message });
   }
 });
-
 
 module.exports = router;

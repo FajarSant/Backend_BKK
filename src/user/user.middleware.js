@@ -1,71 +1,56 @@
-// src/middleware/upload.middleware.js
 const multer = require('multer');
-const path = require('path');
+const cloudinary = require('../config/Cloudinary');
+const streamifier = require('streamifier');
 
-const fs = require('fs');
 
-const uploadDir = path.join(__dirname, '../../uploads/excel');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+const storage = multer.memoryStorage();
 
-const excelStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const extension = path.extname(file.originalname).toLowerCase();
-    cb(null, `${Date.now()}${extension}`);
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 1024 * 1024 * 5 // 5MB file size limit
   }
 });
 
-const excelFileFilter = (req, file, cb) => {
-  const allowedTypes = ['.xlsx', '.xls'];
-  const fileExtension = path.extname(file.originalname).toLowerCase();
-
-  if (allowedTypes.includes(fileExtension)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Only Excel files are allowed!'), false);
+const uploadImage = (req, res, next) => {
+  if (!req.file) {
+    return next();
   }
+
+  const uploadStream = (file, publicId) => {
+    return new Promise((resolve, reject) => {
+      const upload_stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'users',
+          allowed_formats: ['jpg', 'jpeg', 'png'],
+          public_id: publicId
+        },
+        (error, result) => {
+          if (result) {
+            resolve(result);
+          } else {
+            reject(error);
+          }
+        }
+      );
+      streamifier.createReadStream(file.buffer).pipe(upload_stream);
+    });
+  };
+
+  const publicId = req.body.NIS ? `${req.body.NIS.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9\-]/g, '')}` : 'defaultNIS';
+  uploadStream(req.file, publicId)
+    .then(result => {
+      req.file.cloudinary = result;
+      next();
+    })
+    .catch(error => {
+      console.error("Error uploading image to Cloudinary:", error);
+      next(error);
+    });
 };
 
-const uploadExcel = multer({
-  storage: excelStorage,
-  fileFilter: excelFileFilter,
-  limits: {
-    fileSize: 5 * 1024 * 1024 
-  }
-});
-
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, "./uploads/users"); 
-    },
-    filename: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      const extension = path.extname(file.originalname);
-      const namaPT = req.body.NIS; 
-      cb(null, namaPT + extension); 
-    },
-  });
-  
-  
-  const uploadImage = multer({
-    storage: storage,
-    fileFilter: function (req, file, cb) {
-      // Pastikan file yang diunggah adalah gambar
-      if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
-        return cb(new Error("Only image files are allowed!"), false);
-      }
-      cb(null, true);
-    },
-    limits: {
-      fileSize: 1024 * 1024 * 5, 
-    },
-  });
 
 module.exports = {
-  uploadExcel,
   uploadImage,
+  upload,
 };

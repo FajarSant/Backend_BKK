@@ -177,15 +177,8 @@ const DeleteUserById = async (id) => {
   }
 };
 
-
-// Import users from Excel
-const importUsersFromExcel = async (filePath) => {
+const importUsersFromExcel = async (data) => {
   try {
-    const workbook = XLSX.readFile(filePath);
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const data = XLSX.utils.sheet_to_json(sheet);
-
     for (const row of data) {
       // Ensure all fields are present
       const {

@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const path = require("path");
 const bodyParser = require('body-parser');
+const { authenticateToken, authorizeRole } = require('./middleware/authmiddleware'); // Sesuaikan path
 
 // Konfigurasi dotenv di awal
 dotenv.config();
@@ -29,7 +30,7 @@ const jobsController = require("./Jobs/Jobs.controller");
 const pelatihanController = require("./pelatihan/pelatihan.controllers");
 const authController = require("./auth/auth.controller");
 
-// Route
+// Route tanpa otorisasi
 app.use('/users', userController);
 app.use('/application', applicationController);
 app.use('/savejobs', saveJobsController);
@@ -37,10 +38,17 @@ app.use('/jobs', jobsController);
 app.use('/pelatihan', pelatihanController);
 app.use('/auth', authController);
 
+// Route dengan otorisasi
+app.use('/dashboard', authenticateToken, authorizeRole('ADMIN'), (req, res) => {
+  res.send("Welcome to the Admin Dashboard");
+});
+
+// Route umum
 app.get("/api", (req, res) => {
     res.send("API Sedang Berjalan....");
 });
 
+// Jalankan server
 app.listen(PORT, () => {
     console.log("Express is running on port:", PORT);
 });

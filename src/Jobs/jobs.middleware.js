@@ -51,15 +51,25 @@ const uploadImage = (req, res, next) => {
 
 const cleanAndParseArrayString = (inputString) => {
   if (!inputString) return [];
-  
+
   try {
-    const cleanedString = inputString
-      .replace(/\\+/g, '')
-      .replace(/^\[|\]$/g, '')
-      .split(/","|",\s*"/)
-      .map(item => item.replace(/\"/g, ''));
+    // Remove any leading or trailing quotes
+    let cleanedString = inputString.trim().replace(/^"|"$/g, '');
+
+    // Convert the string to a proper JSON array format
+    if (!cleanedString.startsWith('[')) {
+      cleanedString = `[${cleanedString}]`;
+    }
+
+    // Parse the JSON string into an array
+    const array = JSON.parse(cleanedString);
     
-    return cleanedString;
+    // Ensure the result is an array
+    if (!Array.isArray(array)) {
+      throw new Error("Parsed result is not an array");
+    }
+
+    return array;
   } catch (error) {
     console.error("Error parsing array string:", error);
     return [];

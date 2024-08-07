@@ -45,11 +45,15 @@ router.post("/", upload.single("gambar"), uploadImage, async (req, res) => {
     const file = req.file;
     const imageUrl = file ? file.cloudinary.secure_url : null;
 
+    // Parse persyaratan and openrekrutmen fields
+    const persyaratan = req.body.persyaratan ? JSON.parse(req.body.persyaratan) : [];
+    const openrekrutmen = req.body.openrekrutmen ? JSON.parse(req.body.openrekrutmen) : [];
+
     const newJobData = {
       ...req.body,
       gambar: imageUrl,
-      persyaratan: cleanAndParseArrayString(req.body.persyaratan),
-      openrekrutmen: cleanAndParseArrayString(req.body.openrekrutmen),
+      persyaratan: persyaratan,
+      openrekrutmen: openrekrutmen,
     };
 
     if (!newJobData.namaPT || !newJobData.deskripsi || !newJobData.alamat || !newJobData.email || !newJobData.nomorTelepon) {
@@ -89,11 +93,12 @@ router.put("/:id", upload.single("gambar"), uploadImage, async (req, res) => {
       imageUrl = file.cloudinary.secure_url;
     }
 
+    // Directly use the input strings as is
     const updatedJobData = {
       ...req.body,
       gambar: imageUrl,
-      persyaratan: cleanAndParseArrayString(req.body.persyaratan),
-      openrekrutmen: cleanAndParseArrayString(req.body.openrekrutmen),
+      persyaratan: req.body.persyaratan || [],
+      openrekrutmen: req.body.openrekrutmen || [],
     };
 
     const updatedJob = await UpdateJobsById(jobId, updatedJobData);
@@ -107,6 +112,7 @@ router.put("/:id", upload.single("gambar"), uploadImage, async (req, res) => {
     res.status(400).json({ message: "Failed to update job", error: error.message });
   }
 });
+
 
 router.delete("/:id", async (req, res) => {
   try {
@@ -122,18 +128,18 @@ router.delete("/:id", async (req, res) => {
     // Extract the publicId from the image URL and decode URL components
     const publicId = job.gambar ? `lamaran/${decodeURIComponent(job.gambar.split('/').pop().split('.')[0])}` : null;
 
-    if (!publicId) {
-      return res.status(400).json({ message: "No image found to delete" });
-    }
+    if (publicId) {
+      console.log(`Attempting to delete image with public_id: ${publicId}`);
 
-    console.log(`Attempting to delete image with public_id: ${publicId}`);
+      // Delete the image from Cloudinary
+      const result = await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+      console.log('Cloudinary delete result:', result);
 
-    // Delete the image from Cloudinary
-    const result = await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
-    console.log('Cloudinary delete result:', result);
-
-    if (result.result !== 'ok' && result.result !== 'not found') {
-      throw new Error(`Failed to delete image from Cloudinary: ${result.error?.message || 'Unknown error'}`);
+      if (result.result !== 'ok' && result.result !== 'not found') {
+        throw new Error(`Failed to delete image from Cloudinary: ${result.error?.message || 'Unknown error'}`);
+      }
+    } else {
+      console.log('No image to delete');
     }
 
     // Delete related applications and saved jobs
@@ -155,5 +161,6 @@ router.delete("/:id", async (req, res) => {
     });
   }
 });
+
 
 module.exports = router;

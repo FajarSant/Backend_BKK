@@ -13,11 +13,11 @@ const GetAllJobs = async () => {
         openrekrutmen: true,
         tanggalDibuat: true,
         alamat: true,
-        jenis: true,
         nomorTelepon: true,
         email: true,
         Link: true,
         berkas: true,
+        deadline: true,
       },
     });
   } catch (error) {

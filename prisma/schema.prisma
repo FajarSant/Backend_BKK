@@ -33,14 +33,15 @@ model Pekerjaan {
   openrekrutmen     String[]
   gambar            String?
   alamat            String
-  jenis             String
   email             String
   nomorTelepon      String
   Link              String
   tanggalDibuat     DateTime            @default(now())
+  deadline          DateTime?           // Tenggat waktu lamaran
   lamaran           Lamaran[]
   lowonganTersimpan LowonganTersimpan[]
 }
+
 model LowonganTersimpan {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   pekerjaan   Pekerjaan @relation(fields: [pekerjaanId], references: [id])

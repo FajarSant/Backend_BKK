@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const prisma = require("../db");
 
-require("dotenv").config();
+require("dotenv").config(); // Menggunakan dotenv untuk membaca variabel lingkungan
 
 // Fungsi untuk autentikasi pengguna berdasarkan NIS dan password
 async function authenticateUser(nis, password) {
@@ -25,7 +25,7 @@ async function authenticateUser(nis, password) {
 
     // Buat token JWT
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "29d", // Masa berlaku token 1 jam
     });
 
     // Kirim token dan data user
@@ -36,41 +36,6 @@ async function authenticateUser(nis, password) {
   }
 }
 
-// Fungsi untuk registrasi pengguna baru
-async function registerUser(data) {
-  try {
-    // Hash password sebelum menyimpan ke database
-    const hashedPassword = await bcrypt.hash(data.katasandi, 10);
-
-    // Buat pengguna baru menggunakan Prisma
-    const newUser = await prisma.pengguna.create({
-      data: {
-        email: data.email,
-        katasandi: hashedPassword,
-        nama: data.nama,
-        alamat: data.alamat,
-        nomortelepon: data.nomortelepon,
-        gambar: data.gambar,
-        peran: data.peran,
-        jurusan: data.jurusan,
-        NIS: data.nis, // Tambahkan NIS ke data pengguna baru
-      },
-    });
-
-    // Buat token JWT untuk pengguna baru
-    const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
-
-    // Kirim token dan data user
-    return { token, user: newUser };
-  } catch (error) {
-    // Tangani error dengan melempar error ke atas
-    throw new Error(error.message);
-  }
-}
-
 module.exports = {
   authenticateUser,
-  registerUser,
 };

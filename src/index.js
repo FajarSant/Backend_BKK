@@ -2,8 +2,6 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const path = require("path");
-const bodyParser = require('body-parser');
-const { authenticateToken, authorizeRole } = require('./middleware/authmiddleware'); // Sesuaikan path
 
 // Konfigurasi dotenv di awal
 dotenv.config();
@@ -38,17 +36,18 @@ app.use('/jobs', jobsController);
 app.use('/pelatihan', pelatihanController);
 app.use('/auth', authController);
 
-// Route dengan otorisasi
-app.use('/dashboard', authenticateToken, authorizeRole('ADMIN'), (req, res) => {
-  res.send("Welcome to the Admin Dashboard");
-});
-
 // Route umum
 app.get("/api", (req, res) => {
     res.send("API Sedang Berjalan....");
 });
 
+// Middleware untuk menangani kesalahan
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Something broke!');
+});
+
 // Jalankan server
 app.listen(PORT, () => {
-    console.log("Express is running on port:", PORT);
+    console.log(`Express is running on port: ${PORT}`);
 });
